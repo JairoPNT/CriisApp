@@ -25,9 +25,10 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
         } catch (err) { console.error('Error fetching tickets', err); }
     };
 
-    const fetchStats = async () => {
+    const fetchStats = async (filters = {}) => {
         try {
-            const response = await fetch('http://127.0.0.1:3000/api/tickets/stats', {
+            const queryParams = new URLSearchParams(filters).toString();
+            const response = await fetch(`http://127.0.0.1:3000/api/tickets/stats?${queryParams}`, {
                 headers: { 'Authorization': `Bearer ${user.token}` }
             });
             const data = await response.json();
@@ -63,34 +64,45 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
                 animate={{ x: 0 }}
                 style={{ width: '280px', background: 'var(--primary-earth)', color: 'white', padding: '2rem', display: 'flex', flexDirection: 'column' }}
             >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
-                    {user.avatar ? (
-                        <img src={user.avatar} alt="Avatar" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '2px solid white' }} />
-                    ) : (
-                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>👤</div>
-                    )}
-                    <h2 style={{ color: 'white', margin: 0, fontSize: '1.4rem' }}>PQR-Crismor</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '2.5rem' }}>
+                    <img
+                        src="/src/assets/logo_skinhealth.png"
+                        alt="SkinHealth Logo"
+                        style={{ width: '120px', marginBottom: '1.5rem', filter: 'brightness(0) invert(1)' }}
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        {user.avatar ? (
+                            <img src={user.avatar} alt="Avatar" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '2px solid white' }} />
+                        ) : (
+                            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>👤</div>
+                        )}
+                        <h2 style={{ color: 'white', margin: 0, fontSize: '1.2rem' }}>PQR-Crismor</h2>
+                    </div>
                 </div>
 
-                <div style={{ marginBottom: '3rem' }}>
-                    <p style={{ opacity: 0.8, fontSize: '0.9rem' }}>Bienvenido,</p>
-                    <p style={{ fontWeight: '600', fontSize: '1.2rem' }}>{user.username}</p>
-                    <span style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.15)', padding: '2px 8px', borderRadius: '10px' }}>{user.role}</span>
+                <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+                    <p style={{ opacity: 0.8, fontSize: '0.85rem' }}>Bienvenido,</p>
+                    <p style={{ fontWeight: '600', fontSize: '1.1rem' }}>{user.username}</p>
+                    <span style={{ fontSize: '0.7rem', background: 'rgba(255,255,255,0.15)', padding: '2px 8px', borderRadius: '10px', textTransform: 'uppercase' }}>{user.role}</span>
                 </div>
 
                 <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
                     <TabButton active={activeTab === 'new'} onClick={() => setActiveTab('new')} label="🎫 Nuevo PQR" />
-                    <TabButton active={activeTab === 'follow'} onClick={() => setActiveTab('follow')} label="📋 Gestión y Seguimiento" />
+                    <TabButton active={activeTab === 'follow'} onClick={() => setActiveTab('follow')} label="📋 Gestión Casos" />
                     <TabButton active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} label="📊 Informes" />
                     <TabButton active={activeTab === 'stats'} onClick={() => setActiveTab('stats')} label="📈 Estadísticas" />
+                    {user.role === 'SUPERADMIN' && (
+                        <TabButton active={activeTab === 'users'} onClick={() => setActiveTab('users')} label="👥 Usuarios" />
+                    )}
                 </nav>
 
-                <div style={{ paddingTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <TabButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} label="👤 Mi Perfil" />
                     <button
                         onClick={onLogout}
                         className="btn-outline"
-                        style={{ border: '1px solid rgba(255,255,255,0.3)', color: 'white', marginTop: '0.5rem' }}
+                        style={{ border: '1px solid rgba(255,255,255,0.3)', color: 'white', marginTop: '0.3rem', padding: '0.6rem' }}
                     >
                         Cerrar Sesión
                     </button>
@@ -98,7 +110,7 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
             </motion.div>
 
             {/* Main Content */}
-            <div style={{ flex: 1, padding: '3rem', overflowY: 'auto' }}>
+            <div style={{ flex: 1, padding: '3rem', overflowY: 'auto', background: '#F4F7F4' }}>
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={activeTab}
@@ -109,9 +121,10 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
                     >
                         {activeTab === 'new' && <NewTicketForm user={user} onSuccess={() => { fetchTickets(); setActiveTab('follow'); }} />}
                         {activeTab === 'follow' && <TicketList tickets={tickets} user={user} users={users} onUpdate={fetchTickets} />}
-                        {activeTab === 'stats' && <StatsView stats={stats} />}
-                        {activeTab === 'reports' && <ReportsView tickets={tickets} user={user} />}
+                        {activeTab === 'stats' && <StatsView stats={stats} users={users} user={user} onRefresh={fetchStats} />}
+                        {activeTab === 'reports' && <ReportsView tickets={tickets} user={user} users={users} />}
                         {activeTab === 'profile' && <ProfileView user={user} onUpdate={handleProfileUpdate} />}
+                        {activeTab === 'users' && user.role === 'SUPERADMIN' && <UserManagement user={user} users={users} onUpdate={fetchUsers} />}
                     </motion.div>
                 </AnimatePresence>
             </div>
@@ -364,18 +377,21 @@ const FollowUpForm = ({ ticket, user, onDone }) => {
     );
 };
 
-const ReportsView = ({ tickets, user }) => {
+const ReportsView = ({ tickets, user, users }) => {
     const [startDate, setStartDate] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
     const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+    const [selectedGestor, setSelectedGestor] = useState('all');
     const [filteredTickets, setFilteredTickets] = useState([]);
 
     useEffect(() => {
         const filtered = tickets.filter(t => {
             const ticketDate = new Date(t.createdAt).toISOString().split('T')[0];
-            return ticketDate >= startDate && ticketDate <= endDate;
+            const dateMatch = ticketDate >= startDate && ticketDate <= endDate;
+            const gestorMatch = selectedGestor === 'all' || t.assignedToId === parseInt(selectedGestor);
+            return dateMatch && gestorMatch;
         });
         setFilteredTickets(filtered);
-    }, [startDate, endDate, tickets]);
+    }, [startDate, endDate, selectedGestor, tickets]);
 
     const totalCommission = filteredTickets.length * 70000;
 
@@ -384,24 +400,30 @@ const ReportsView = ({ tickets, user }) => {
         const now = new Date().toLocaleString();
 
         doc.setFontSize(22);
+        doc.setTextColor(41, 80, 38);
         doc.text('Reporte de Gestión PQR-Crismor', 20, 30);
 
         doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
         doc.text(`Generado por: ${user.username}`, 20, 50);
         doc.text(`Fecha del Reporte: ${now}`, 20, 60);
         doc.text(`Periodo: desde ${startDate} hasta ${endDate}`, 20, 70);
+        if (selectedGestor !== 'all') {
+            const gName = users.find(u => u.id === parseInt(selectedGestor))?.username;
+            doc.text(`Gestor: ${gName}`, 20, 80);
+        }
 
-        doc.line(20, 75, 190, 75);
+        doc.line(20, 85, 190, 85);
 
         doc.setFontSize(14);
-        doc.text('Resumen del Periodo', 20, 90);
-        doc.text(`Casos gestionados: ${filteredTickets.length}`, 30, 100);
-        doc.text(`Valor total comisionado: $${totalCommission.toLocaleString()} COP`, 30, 110);
+        doc.text('Resumen del Periodo', 20, 100);
+        doc.text(`Casos gestionados: ${filteredTickets.length}`, 30, 110);
+        doc.text(`Valor total comisionado: $${totalCommission.toLocaleString()} COP`, 30, 120);
 
         doc.setFontSize(10);
-        doc.text('Detalle de Casos:', 20, 130);
+        doc.text('Detalle de Casos:', 20, 140);
         filteredTickets.forEach((t, i) => {
-            const y = 140 + (i * 10);
+            const y = 150 + (i * 10);
             if (y < 280) {
                 doc.text(`${t.id} - ${t.patientName} (${t.city}) - ${new Date(t.createdAt).toLocaleDateString()}`, 25, y);
             }
@@ -413,7 +435,7 @@ const ReportsView = ({ tickets, user }) => {
     return (
         <div className="glass-card">
             <h3 style={{ marginBottom: '2rem' }}>Generar Informe de Gestión</h3>
-            <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-end', marginBottom: '3rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', alignItems: 'flex-end', marginBottom: '3rem' }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                     <label className="form-label">Desde</label>
                     <input type="date" className="input-field" value={startDate} onChange={e => setStartDate(e.target.value)} />
@@ -422,19 +444,28 @@ const ReportsView = ({ tickets, user }) => {
                     <label className="form-label">Hasta</label>
                     <input type="date" className="input-field" value={endDate} onChange={e => setEndDate(e.target.value)} />
                 </div>
+                {user.role === 'SUPERADMIN' && (
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                        <label className="form-label">Filtrar por Gestor</label>
+                        <select className="input-field" value={selectedGestor} onChange={e => setSelectedGestor(e.target.value)}>
+                            <option value="all">Todos los gestores</option>
+                            {users.map(u => <option key={u.id} value={u.id}>{u.username}</option>)}
+                        </select>
+                    </div>
+                )}
                 <button className="btn-primary" onClick={generatePDF}>
                     📥 Descargar Informe PDF
                 </button>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-                <div style={{ padding: '2rem', background: 'rgba(139, 115, 85, 0.05)', borderRadius: '15px' }}>
+                <div style={{ padding: '2rem', background: 'white', borderRadius: '15px', border: '1px solid rgba(41, 80, 38, 0.1)' }}>
                     <p style={{ color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Casos en el periodo</p>
-                    <p style={{ fontSize: '2rem', fontWeight: 'bold' }}>{filteredTickets.length}</p>
+                    <p style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{filteredTickets.length}</p>
                 </div>
-                <div style={{ padding: '2rem', background: 'rgba(139, 115, 85, 0.05)', borderRadius: '15px' }}>
+                <div style={{ padding: '2rem', background: 'white', borderRadius: '15px', border: '1px solid rgba(41, 80, 38, 0.1)' }}>
                     <p style={{ color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Total Comisionado</p>
-                    <p style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--primary-earth)' }}>
+                    <p style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--primary-earth)' }}>
                         ${totalCommission.toLocaleString()}
                     </p>
                 </div>
@@ -443,86 +474,132 @@ const ReportsView = ({ tickets, user }) => {
     );
 };
 
-const ProfileView = ({ user, onUpdate }) => {
-    const [formData, setFormData] = useState({
-        username: user.username,
-        email: user.email || '',
-        phone: user.phone || '',
-        avatar: user.avatar || '',
-        password: ''
-    });
+const UserManagement = ({ user, users, onUpdate }) => {
+    const [editingUser, setEditingUser] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [success, setSuccess] = useState(false);
 
-    const handleSubmit = async (e) => {
+    const handleUpdateUser = async (e) => {
         e.preventDefault();
         setLoading(true);
-        setSuccess(false);
         try {
-            const response = await fetch('http://127.0.0.1:3000/api/auth/profile', {
+            const response = await fetch(`http://127.0.0.1:3000/api/auth/users/${editingUser.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user.token}` },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(editingUser)
             });
-            const data = await response.json();
             if (response.ok) {
-                onUpdate(data);
-                setSuccess(true);
-                setTimeout(() => setSuccess(false), 3000);
+                setEditingUser(null);
+                onUpdate();
             }
-        } catch (err) { alert('Error al actualizar perfil'); }
+        } catch (err) { alert('Error al actualizar usuario'); }
         finally { setLoading(false); }
     };
 
     return (
-        <div className="glass-card" style={{ maxWidth: '600px' }}>
-            <h3 style={{ marginBottom: '2rem' }}>Información de Mi Perfil</h3>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label className="form-label">Nombre de Usuario</label>
-                    <input className="input-field" value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })} required />
-                </div>
-                <div className="form-group">
-                    <label className="form-label">Correo Electrónico</label>
-                    <input className="input-field" type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
-                </div>
-                <div className="form-group">
-                    <label className="form-label">Teléfono de Contacto</label>
-                    <input className="input-field" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
-                </div>
-                <div className="form-group">
-                    <label className="form-label">URL del Avatar (Imagen)</label>
-                    <input className="input-field" value={formData.avatar} onChange={e => setFormData({ ...formData, avatar: e.target.value })} placeholder="https://ejemplo.com/foto.jpg" />
-                </div>
-                <div className="form-group">
-                    <label className="form-label">Cambiar Contraseña (Dejar en blanco para mantener actual)</label>
-                    <input className="input-field" type="password" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
-                </div>
+        <div>
+            <h3 style={{ marginBottom: '2rem' }}>Administración de Usuarios y Gestores</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                {users.map(u => (
+                    <motion.div key={u.id} className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '1.5rem' }}>
+                        {u.avatar ? (
+                            <img src={u.avatar} alt="Avatar" style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover' }} />
+                        ) : (
+                            <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'var(--pale-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>👤</div>
+                        )}
+                        <div style={{ flex: 1 }}>
+                            <p style={{ fontWeight: '600', fontSize: '1.1rem', marginBottom: '0.2rem' }}>{u.username}</p>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>{u.email || 'Sin correo'}</p>
+                            <span style={{ fontSize: '0.75rem', background: 'var(--pale-green)', padding: '2px 8px', borderRadius: '10px' }}>{u.role}</span>
+                        </div>
+                        <button className="btn-outline" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }} onClick={() => setEditingUser(u)}>Editar</button>
+                    </motion.div>
+                ))}
+            </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2rem' }}>
-                    <button type="submit" className="btn-primary" disabled={loading}>
-                        {loading ? 'Actualizando...' : 'Actualizar Perfil'}
-                    </button>
-                    {success && <p style={{ color: 'var(--success)', fontWeight: '600' }}>✓ Perfil actualizado con éxito</p>}
-                </div>
-            </form>
+            <AnimatePresence>
+                {editingUser && (
+                    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
+                        <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="glass-card" style={{ background: 'white', width: '90%', maxWidth: '500px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                                <h4>Editar Usuario: {editingUser.username}</h4>
+                                <button onClick={() => setEditingUser(null)} style={{ background: 'none', fontSize: '1.2rem' }}>✕</button>
+                            </div>
+                            <form onSubmit={handleUpdateUser} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                <div className="form-group">
+                                    <label className="form-label">Nombre</label>
+                                    <input className="input-field" value={editingUser.username} onChange={e => setEditingUser({ ...editingUser, username: e.target.value })} />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Rol</label>
+                                    <select className="input-field" value={editingUser.role} onChange={e => setEditingUser({ ...editingUser, role: e.target.value })}>
+                                        <option value="GESTOR">Gestor</option>
+                                        <option value="SUPERADMIN">Super Admin</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Correo</label>
+                                    <input className="input-field" value={editingUser.email} onChange={e => setEditingUser({ ...editingUser, email: e.target.value })} />
+                                </div>
+                                <button type="submit" className="btn-primary" disabled={loading}>{loading ? 'Guardando...' : 'Guardar Cambios'}</button>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
 
-const StatsView = ({ stats }) => {
+const StatsView = ({ stats, users, user, onRefresh }) => {
+    const [filters, setFilters] = useState({ city: '', gestorId: '', status: '' });
+
+    const handleFilterChange = (key, value) => {
+        const newFilters = { ...filters, [key]: value };
+        setFilters(newFilters);
+        onRefresh(newFilters);
+    };
+
     if (!stats) return <div className="loading-placeholder" style={{ height: '200px' }}></div>;
     return (
         <div>
-            <h3 style={{ marginBottom: '2rem' }}>Resumen General de Gestión</h3>
+            <h3 style={{ marginBottom: '2rem' }}>Análisis de Gestión Estratégica</h3>
+
+            <div className="glass-card" style={{ display: 'flex', gap: '1.5rem', marginBottom: '2rem', padding: '1.5rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                <div className="form-group" style={{ marginBottom: 0, flex: 1, minWidth: '150px' }}>
+                    <label className="form-label" style={{ fontSize: '0.8rem' }}>Ciudad</label>
+                    <select className="input-field" value={filters.city} onChange={e => handleFilterChange('city', e.target.value)}>
+                        <option value="">Todas</option>
+                        {stats.cityStats.map(c => <option key={c.city} value={c.city}>{c.city}</option>)}
+                    </select>
+                </div>
+                {user.role === 'SUPERADMIN' && (
+                    <div className="form-group" style={{ marginBottom: 0, flex: 1, minWidth: '150px' }}>
+                        <label className="form-label" style={{ fontSize: '0.8rem' }}>Gestor</label>
+                        <select className="input-field" value={filters.gestorId} onChange={e => handleFilterChange('gestorId', e.target.value)}>
+                            <option value="">Todos</option>
+                            {users.map(u => <option key={u.id} value={u.id}>{u.username}</option>)}
+                        </select>
+                    </div>
+                )}
+                <div className="form-group" style={{ marginBottom: 0, flex: 1, minWidth: '150px' }}>
+                    <label className="form-label" style={{ fontSize: '0.8rem' }}>Estado</label>
+                    <select className="input-field" value={filters.status} onChange={e => handleFilterChange('status', e.target.value)}>
+                        <option value="">Todos</option>
+                        <option value="PROCESO">En Proceso</option>
+                        <option value="CERRADO">Cerrados (Finalizados)</option>
+                    </select>
+                </div>
+                <button className="btn-outline" style={{ padding: '0.8rem' }} onClick={() => handleFilterChange('reset', '')}>🔄</button>
+            </div>
+
             <div className="stats-grid">
                 <StatCard label="Total PQRs" value={stats.totalTickets} color="var(--primary-earth)" />
-                <StatCard label="Casos Finalizados" value={stats.resolvedTickets} color="var(--success)" />
-                <StatCard label="Ingresos Totales" value={`$${stats.totalRevenue.toLocaleString()}`} color="#8B7355" />
+                <StatCard label="Finalizados" value={stats.resolvedTickets} color="var(--success)" />
+                <StatCard label="Ingresos" value={`$${stats.totalRevenue.toLocaleString()}`} color="#3a6b36" />
             </div>
 
             <div className="glass-card">
-                <h4>Distribución por Ciudad</h4>
+                <h4>Distribución Geográfica</h4>
                 <div style={{ marginTop: '1.5rem' }}>
                     {stats.cityStats.map(c => (
                         <div key={c.city} style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem 0', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
@@ -540,10 +617,10 @@ const StatCard = ({ label, value, color }) => (
     <motion.div
         whileHover={{ y: -5 }}
         className="glass-card"
-        style={{ textAlign: 'center', borderTop: `6px solid ${color}`, padding: '2.5rem 1rem' }}
+        style={{ textAlign: 'center', borderTop: `6px solid ${color}`, padding: '2rem 1rem' }}
     >
-        <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</p>
-        <p style={{ fontSize: '2.5rem', fontWeight: 'bold', color: color }}>{value}</p>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</p>
+        <p style={{ fontSize: '2.2rem', fontWeight: 'bold', color: color }}>{value}</p>
     </motion.div>
 );
 

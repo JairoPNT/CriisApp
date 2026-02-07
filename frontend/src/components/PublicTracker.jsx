@@ -31,11 +31,21 @@ const PublicTracker = ({ onBack }) => {
 
     return (
         <div className="container">
-            <button onClick={onBack} style={{ background: 'none', color: 'var(--text-muted)', marginBottom: '2rem', padding: 0, fontWeight: 500 }}>
-                ← Volver al inicio
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '3rem' }}>
+                <img
+                    src="/src/assets/logo_skinhealth.png"
+                    alt="SkinHealth Logo"
+                    style={{ width: '180px', marginBottom: '2rem' }}
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                />
+                <h1 style={{ color: 'var(--primary-earth)', fontSize: '2.5rem', marginBottom: '0.5rem' }}>SkinHealth PQRS</h1>
+                <p style={{ color: 'var(--text-muted)' }}>Módulo de Consulta Ciudadana</p>
+            </div>
 
-            <div className="glass-card" style={{ maxWidth: '600px', margin: '0 auto' }}>
+            <button onClick={onBack} style={{ background: 'none', color: 'var(--text-muted)', marginBottom: '2rem', padding: 0, fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '1.2rem' }}>←</span> Volver al inicio
+            </button>
+            <div className="glass-card" style={{ maxWidth: '700px', margin: '0 auto' }}>
                 <h2 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>Consulta tu Caso</h2>
                 <form onSubmit={handleSearch} style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
                     <input
@@ -51,7 +61,7 @@ const PublicTracker = ({ onBack }) => {
                     </button>
                 </form>
 
-                {error && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ color: 'var(--error)', textAlign: 'center' }}>{error}</motion.p>}
+                {error && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ color: 'var(--error)', textAlign: 'center', marginBottom: '1rem' }}>{error}</motion.p>}
 
                 {loading && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

@@ -162,14 +162,34 @@ const addFollowUp = async (req, res) => {
 };
 
 const getStats = async (req, res) => {
+    const { city, gestorId, status } = req.query;
+
     try {
-        const totalTickets = await prisma.ticket.count();
-        const resolvedTickets = await prisma.ticket.count({ where: { status: 'FINALIZADO' } });
+        const where = {};
+        if (city) where.city = city;
+        if (gestorId) where.assignedToId = parseInt(gestorId);
+        if (status) {
+            if (status === 'PROCESO') {
+                where.status = { in: ['INICIADO', 'EN_SEGUIMIENTO'] };
+            } else if (status === 'CERRADO') {
+                where.status = 'FINALIZADO';
+            } else {
+                where.status = status;
+            }
+        }
+
+        const totalTickets = await prisma.ticket.count({ where });
+        const resolvedTickets = await prisma.ticket.count({
+            where: { ...where, status: 'FINALIZADO' }
+        });
+
         const revenue = await prisma.ticket.aggregate({
+            where,
             _sum: { revenue: true }
         });
 
         const cityStats = await prisma.ticket.groupBy({
+            where,
             by: ['city'],
             _count: { _all: true }
         });

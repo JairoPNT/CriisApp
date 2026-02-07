@@ -44,7 +44,15 @@ const LoginPage = ({ onLogin, onBack }) => {
                 <button onClick={onBack} style={{ background: 'none', color: 'var(--text-muted)', marginBottom: '1.5rem', padding: 0, fontWeight: 500 }}>
                     ← Volver
                 </button>
-                <h2 style={{ marginBottom: '2rem', textAlign: 'center' }}>Acceso Gestor</h2>
+                <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                    <img
+                        src="/src/assets/logo_skinhealth.png"
+                        alt="SkinHealth Logo"
+                        style={{ width: '120px', marginBottom: '1rem' }}
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                    <h2 style={{ margin: 0 }}>Acceso Gestor</h2>
+                </div>
 
                 <form onSubmit={handleSubmit}>
                     {error && (

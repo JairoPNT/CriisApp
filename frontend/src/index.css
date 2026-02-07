@@ -1,17 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap');
 
 :root {
-  --primary-earth: #8B7355;
-  --secondary-earth: #A68B6D;
+  --primary-earth: #295026;
+  --secondary-earth: #3a6b36;
   --pale-green: #C1D8C3;
   --light-bg: #F9F7F5;
-  --text-dark: #3E362E;
+  --text-dark: #1e3a1c;
   --text-muted: #666;
   --glass-bg: rgba(255, 255, 255, 0.4);
   --glass-border: rgba(255, 255, 255, 0.2);
   --glass-hover: rgba(255, 255, 255, 0.6);
-  --shadow: 0 8px 32px 0 rgba(139, 115, 85, 0.1);
-  --shadow-hover: 0 12px 40px 0 rgba(139, 115, 85, 0.15);
+  --shadow: 0 8px 32px 0 rgba(41, 80, 38, 0.1);
+  --shadow-hover: 0 12px 40px 0 rgba(41, 80, 38, 0.15);
   --error: #d9534f;
   --success: #5cb85c;
 }

@@ -63,14 +63,40 @@ const updateProfile = async (req, res) => {
 const getUsers = async (req, res) => {
     try {
         if (req.user.role !== 'SUPERADMIN') {
-            return res.status(403).json({ message: 'No autorizado' });
+            return res.status(403).json({ message: 'Acceso denegado' });
         }
         const users = await prisma.user.findMany({
-            select: { id: true, username: true, role: true, email: true }
+            select: { id: true, username: true, role: true, email: true, phone: true, avatar: true }
         });
         res.json(users);
     } catch (error) {
         res.status(500).json({ message: 'Error al obtener usuarios', error: error.message });
+    }
+};
+
+const updateUser = async (req, res) => {
+    const { id } = req.params;
+    const { username, email, phone, avatar, role, password } = req.body;
+
+    try {
+        if (req.user.role !== 'SUPERADMIN') {
+            return res.status(403).json({ message: 'Solo el administrador puede modificar usuarios' });
+        }
+
+        const updateData = { username, email, phone, avatar, role };
+        if (password) {
+            updateData.password = await hashPassword(password);
+        }
+
+        const updatedUser = await prisma.user.update({
+            where: { id: parseInt(id) },
+            data: updateData,
+            select: { id: true, username: true, role: true, email: true, phone: true, avatar: true }
+        });
+
+        res.json(updatedUser);
+    } catch (error) {
+        res.status(500).json({ message: 'Error al actualizar usuario', error: error.message });
     }
 };
 
@@ -102,5 +128,6 @@ module.exports = {
     login,
     updateProfile,
     getUsers,
+    updateUser,
     seedUsers,
 };
