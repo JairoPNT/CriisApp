@@ -79,16 +79,18 @@ const Dashboard = ({ user: initialUser, onLogout }) => {
                     <TabButton active={activeTab === 'follow'} onClick={() => setActiveTab('follow')} label="📋 Gestión y Seguimiento" />
                     <TabButton active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} label="📊 Informes" />
                     <TabButton active={activeTab === 'stats'} onClick={() => setActiveTab('stats')} label="📈 Estadísticas" />
-                    <TabButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} label="👤 Mi Perfil" />
                 </nav>
 
-                <button
-                    onClick={onLogout}
-                    className="btn-outline"
-                    style={{ border: '1px solid rgba(255,255,255,0.3)', color: 'white', marginTop: '2rem' }}
-                >
-                    Cerrar Sesión
-                </button>
+                <div style={{ paddingTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <TabButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} label="👤 Mi Perfil" />
+                    <button
+                        onClick={onLogout}
+                        className="btn-outline"
+                        style={{ border: '1px solid rgba(255,255,255,0.3)', color: 'white', marginTop: '0.5rem' }}
+                    >
+                        Cerrar Sesión
+                    </button>
+                </div>
             </motion.div>
 
             {/* Main Content */}

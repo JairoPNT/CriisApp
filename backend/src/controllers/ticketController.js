@@ -119,6 +119,48 @@ const reassignTicket = async (req, res) => {
     }
 };
 
+const addFollowUp = async (req, res) => {
+    const { id } = req.params;
+    const { content, diagnosis, protocol, bonusInfo, status } = req.body;
+
+    if (!diagnosis) {
+        return res.status(400).json({ message: 'El diagnóstico es obligatorio para agregar un seguimiento' });
+    }
+
+    try {
+        // Check ownership
+        const ticket = await prisma.ticket.findUnique({ where: { id } });
+        if (!ticket) return res.status(404).json({ message: 'Ticket no encontrado' });
+
+        if (req.user.role !== 'SUPERADMIN' && ticket.assignedToId !== req.user.id) {
+            return res.status(403).json({ message: 'No tienes permiso para gestionar este ticket' });
+        }
+
+        const followUp = await prisma.followUp.create({
+            data: {
+                ticketId: id,
+                content: content || 'Actualización de seguimiento',
+                diagnosis,
+                protocol,
+                bonusInfo,
+            },
+        });
+
+        // Update ticket status
+        const updatedTicket = await prisma.ticket.update({
+            where: { id },
+            data: { status: status || 'EN_SEGUIMIENTO' },
+        });
+
+        triggerN8nWebhook({ ...followUp, ticket: updatedTicket }, 'FOLLOW_UP');
+
+        res.status(201).json(followUp);
+    } catch (error) {
+        console.error('Add FollowUp Error:', error);
+        res.status(500).json({ message: 'Error al agregar seguimiento', error: error.message });
+    }
+};
+
 const getStats = async (req, res) => {
     try {
         const totalTickets = await prisma.ticket.count();
