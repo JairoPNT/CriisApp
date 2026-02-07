@@ -5,7 +5,8 @@ const {
     getTickets,
     getTicketByPublicId,
     addFollowUp,
-    getStats
+    getStats,
+    reassignTicket
 } = require('../controllers/ticketController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -19,5 +20,6 @@ router.post('/', protect, upload.array('photos', 3), createTicket);
 router.get('/', protect, getTickets);
 router.post('/:id/follow-up', protect, addFollowUp);
 router.get('/stats', protect, getStats);
+router.put('/:id/reassign', protect, reassignTicket);
 
 module.exports = router;

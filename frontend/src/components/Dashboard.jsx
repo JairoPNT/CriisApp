@@ -1,16 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { jsPDF } from 'jspdf';
-
-const Dashboard = ({ user, onLogout }) => {
+const Dashboard = ({ user: initialUser, onLogout }) => {
+    const [user, setUser] = useState(initialUser);
     const [activeTab, setActiveTab] = useState('new');
     const [tickets, setTickets] = useState([]);
     const [stats, setStats] = useState(null);
+    const [users, setUsers] = useState([]);
 
     useEffect(() => {
         fetchTickets();
         fetchStats();
-    }, []);
+        if (user.role === 'SUPERADMIN') fetchUsers();
+    }, [user]);
 
     const fetchTickets = async () => {
         try {
@@ -32,6 +31,20 @@ const Dashboard = ({ user, onLogout }) => {
         } catch (err) { console.error('Error fetching stats', err); }
     };
 
+    const fetchUsers = async () => {
+        try {
+            const response = await fetch('http://127.0.0.1:3000/api/auth/users', {
+                headers: { 'Authorization': `Bearer ${user.token}` }
+            });
+            const data = await response.json();
+            if (response.ok) setUsers(data);
+        } catch (err) { console.error('Error fetching users', err); }
+    };
+
+    const handleProfileUpdate = (updatedData) => {
+        setUser({ ...user, ...updatedData });
+    };
+
     const containerVariants = {
         hidden: { opacity: 0, y: 10 },
         visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
@@ -46,17 +59,27 @@ const Dashboard = ({ user, onLogout }) => {
                 animate={{ x: 0 }}
                 style={{ width: '280px', background: 'var(--primary-earth)', color: 'white', padding: '2rem', display: 'flex', flexDirection: 'column' }}
             >
-                <h2 style={{ color: 'white', marginBottom: '2rem' }}>PQR-Crismor</h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+                    {user.avatar ? (
+                        <img src={user.avatar} alt="Avatar" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '2px solid white' }} />
+                    ) : (
+                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>👤</div>
+                    )}
+                    <h2 style={{ color: 'white', margin: 0, fontSize: '1.4rem' }}>PQR-Crismor</h2>
+                </div>
+
                 <div style={{ marginBottom: '3rem' }}>
                     <p style={{ opacity: 0.8, fontSize: '0.9rem' }}>Bienvenido,</p>
                     <p style={{ fontWeight: '600', fontSize: '1.2rem' }}>{user.username}</p>
+                    <span style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.15)', padding: '2px 8px', borderRadius: '10px' }}>{user.role}</span>
                 </div>
 
                 <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
-                    <TabButton active={activeTab === 'new'} onClick={() => setActiveTab('new')} label="Nuevo Ticket" />
-                    <TabButton active={activeTab === 'follow'} onClick={() => setActiveTab('follow')} label="Seguimiento" />
-                    <TabButton active={activeTab === 'stats'} onClick={() => setActiveTab('stats')} label="Estadísticas" />
-                    <TabButton active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} label="Informes" />
+                    <TabButton active={activeTab === 'new'} onClick={() => setActiveTab('new')} label="🎫 Nuevo PQR" />
+                    <TabButton active={activeTab === 'follow'} onClick={() => setActiveTab('follow')} label="📋 Gestión y Seguimiento" />
+                    <TabButton active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} label="📊 Informes" />
+                    <TabButton active={activeTab === 'stats'} onClick={() => setActiveTab('stats')} label="📈 Estadísticas" />
+                    <TabButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} label="👤 Mi Perfil" />
                 </nav>
 
                 <button
@@ -79,9 +102,10 @@ const Dashboard = ({ user, onLogout }) => {
                         exit="exit"
                     >
                         {activeTab === 'new' && <NewTicketForm user={user} onSuccess={() => { fetchTickets(); setActiveTab('follow'); }} />}
-                        {activeTab === 'follow' && <TicketList tickets={tickets} user={user} onUpdate={fetchTickets} />}
+                        {activeTab === 'follow' && <TicketList tickets={tickets} user={user} users={users} onUpdate={fetchTickets} />}
                         {activeTab === 'stats' && <StatsView stats={stats} />}
                         {activeTab === 'reports' && <ReportsView tickets={tickets} user={user} />}
+                        {activeTab === 'profile' && <ProfileView user={user} onUpdate={handleProfileUpdate} />}
                     </motion.div>
                 </AnimatePresence>
             </div>
@@ -181,33 +205,80 @@ const NewTicketForm = ({ user, onSuccess }) => {
     );
 };
 
-const TicketList = ({ tickets, user, onUpdate }) => {
+const TicketList = ({ tickets, user, users, onUpdate }) => {
     const [selectedTicket, setSelectedTicket] = useState(null);
+    const [reassigning, setReassigning] = useState(null);
+
+    const handleReassign = async (ticketId, userId) => {
+        try {
+            const response = await fetch(`http://127.0.0.1:3000/api/tickets/${ticketId}/reassign`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user.token}` },
+                body: JSON.stringify({ assignedToId: userId })
+            });
+            if (response.ok) {
+                setReassigning(null);
+                onUpdate();
+            }
+        } catch (err) { alert('Error al reasignar'); }
+    };
 
     return (
         <div>
-            <h3 style={{ marginBottom: '2rem' }}>Listado de tickets ({tickets.length})</h3>
+            <h3 style={{ marginBottom: '2rem' }}>Gestión de Casos ({tickets.length})</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {tickets.map((t, idx) => (
-                    <motion.div
-                        key={t.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: idx * 0.05 }}
-                        className="glass-card"
-                        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem 2rem' }}
-                    >
-                        <div>
-                            <p style={{ fontWeight: '600', color: 'var(--primary-earth)', marginBottom: '0.2rem' }}>{t.id}</p>
-                            <p style={{ fontWeight: '500' }}>{t.patientName}</p>
-                            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t.city} • {new Date(t.createdAt).toLocaleDateString()}</p>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                            <span className={`status-badge status-${t.status.toLowerCase()}`}>{t.status}</span>
-                            <button className="btn-outline" style={{ padding: '0.5rem 1.2rem' }} onClick={() => setSelectedTicket(t)}>Gestionar</button>
-                        </div>
-                    </motion.div>
-                ))}
+                {tickets.map((t, idx) => {
+                    const isOwner = t.assignedToId === user.id || user.role === 'SUPERADMIN';
+                    return (
+                        <motion.div
+                            key={t.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: idx * 0.05 }}
+                            className="glass-card"
+                            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem 2rem' }}
+                        >
+                            <div style={{ flex: 1 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.3rem' }}>
+                                    <p style={{ fontWeight: '600', color: 'var(--primary-earth)', margin: 0 }}>{t.id}</p>
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Gestor: {t.assignedTo?.username || 'Sin asignar'}</span>
+                                </div>
+                                <p style={{ fontWeight: '500', marginBottom: '0.3rem' }}>{t.patientName}</p>
+                                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t.city} • {new Date(t.createdAt).toLocaleDateString()}</p>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                                <span className={`status-badge status-${t.status.toLowerCase()}`}>{t.status}</span>
+
+                                {user.role === 'SUPERADMIN' && (
+                                    <div style={{ position: 'relative' }}>
+                                        <button className="btn-outline" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }} onClick={() => setReassigning(reassigning === t.id ? null : t.id)}>
+                                            Reasignar
+                                        </button>
+                                        <AnimatePresence>
+                                            {reassigning === t.id && (
+                                                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} style={{ position: 'absolute', top: '110%', right: 0, background: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', borderRadius: '10px', zIndex: 10, width: '180px', padding: '0.5rem' }}>
+                                                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.5rem', padding: '0 0.5rem' }}>Asignar a:</p>
+                                                    {users.map(u => (
+                                                        <button key={u.id} style={{ width: '100%', textAlign: 'left', padding: '0.5rem', borderRadius: '5px', background: t.assignedToId === u.id ? 'var(--pale-green)' : 'none', fontSize: '0.85rem' }} onClick={() => handleReassign(t.id, u.id)}>
+                                                            {u.username}
+                                                        </button>
+                                                    ))}
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+                                )}
+
+                                {isOwner ? (
+                                    <button className="btn-primary" style={{ padding: '0.5rem 1.2rem' }} onClick={() => setSelectedTicket(t)}>Gestionar</button>
+                                ) : (
+                                    <button className="btn-outline" style={{ padding: '0.5rem 1.2rem', opacity: 0.5, cursor: 'not-allowed' }} disabled>Lectura</button>
+                                )}
+                            </div>
+                        </motion.div>
+                    );
+                })}
             </div>
 
             <AnimatePresence>
@@ -288,17 +359,17 @@ const FollowUpForm = ({ ticket, user, onDone }) => {
 };
 
 const ReportsView = ({ tickets, user }) => {
-    const [days, setDays] = useState(30);
+    const [startDate, setStartDate] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
+    const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
     const [filteredTickets, setFilteredTickets] = useState([]);
 
     useEffect(() => {
-        const now = new Date();
-        const pastDate = new Date();
-        pastDate.setDate(now.getDate() - days);
-
-        const filtered = tickets.filter(t => new Date(t.createdAt) >= pastDate);
+        const filtered = tickets.filter(t => {
+            const ticketDate = new Date(t.createdAt).toISOString().split('T')[0];
+            return ticketDate >= startDate && ticketDate <= endDate;
+        });
         setFilteredTickets(filtered);
-    }, [days, tickets]);
+    }, [startDate, endDate, tickets]);
 
     const totalCommission = filteredTickets.length * 70000;
 
@@ -312,7 +383,7 @@ const ReportsView = ({ tickets, user }) => {
         doc.setFontSize(12);
         doc.text(`Generado por: ${user.username}`, 20, 50);
         doc.text(`Fecha del Reporte: ${now}`, 20, 60);
-        doc.text(`Periodo: últimos ${days} días`, 20, 70);
+        doc.text(`Periodo: desde ${startDate} hasta ${endDate}`, 20, 70);
 
         doc.line(20, 75, 190, 75);
 
@@ -338,17 +409,15 @@ const ReportsView = ({ tickets, user }) => {
             <h3 style={{ marginBottom: '2rem' }}>Generar Informe de Gestión</h3>
             <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-end', marginBottom: '3rem' }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label className="form-label">Periodo (días atrás desde hoy)</label>
-                    <input
-                        type="number"
-                        className="input-field"
-                        style={{ width: '150px' }}
-                        value={days}
-                        onChange={e => setDays(parseInt(e.target.value) || 0)}
-                    />
+                    <label className="form-label">Desde</label>
+                    <input type="date" className="input-field" value={startDate} onChange={e => setStartDate(e.target.value)} />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Hasta</label>
+                    <input type="date" className="input-field" value={endDate} onChange={e => setEndDate(e.target.value)} />
                 </div>
                 <button className="btn-primary" onClick={generatePDF}>
-                    📥 Descargar Reporte PDF
+                    📥 Descargar Informe PDF
                 </button>
             </div>
 
@@ -364,6 +433,73 @@ const ReportsView = ({ tickets, user }) => {
                     </p>
                 </div>
             </div>
+        </div>
+    );
+};
+
+const ProfileView = ({ user, onUpdate }) => {
+    const [formData, setFormData] = useState({
+        username: user.username,
+        email: user.email || '',
+        phone: user.phone || '',
+        avatar: user.avatar || '',
+        password: ''
+    });
+    const [loading, setLoading] = useState(false);
+    const [success, setSuccess] = useState(false);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setSuccess(false);
+        try {
+            const response = await fetch('http://127.0.0.1:3000/api/auth/profile', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user.token}` },
+                body: JSON.stringify(formData)
+            });
+            const data = await response.json();
+            if (response.ok) {
+                onUpdate(data);
+                setSuccess(true);
+                setTimeout(() => setSuccess(false), 3000);
+            }
+        } catch (err) { alert('Error al actualizar perfil'); }
+        finally { setLoading(false); }
+    };
+
+    return (
+        <div className="glass-card" style={{ maxWidth: '600px' }}>
+            <h3 style={{ marginBottom: '2rem' }}>Información de Mi Perfil</h3>
+            <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                    <label className="form-label">Nombre de Usuario</label>
+                    <input className="input-field" value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })} required />
+                </div>
+                <div className="form-group">
+                    <label className="form-label">Correo Electrónico</label>
+                    <input className="input-field" type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                </div>
+                <div className="form-group">
+                    <label className="form-label">Teléfono de Contacto</label>
+                    <input className="input-field" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                </div>
+                <div className="form-group">
+                    <label className="form-label">URL del Avatar (Imagen)</label>
+                    <input className="input-field" value={formData.avatar} onChange={e => setFormData({ ...formData, avatar: e.target.value })} placeholder="https://ejemplo.com/foto.jpg" />
+                </div>
+                <div className="form-group">
+                    <label className="form-label">Cambiar Contraseña (Dejar en blanco para mantener actual)</label>
+                    <input className="input-field" type="password" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2rem' }}>
+                    <button type="submit" className="btn-primary" disabled={loading}>
+                        {loading ? 'Actualizando...' : 'Actualizar Perfil'}
+                    </button>
+                    {success && <p style={{ color: 'var(--success)', fontWeight: '600' }}>✓ Perfil actualizado con éxito</p>}
+                </div>
+            </form>
         </div>
     );
 };

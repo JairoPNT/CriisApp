@@ -28,13 +28,14 @@ const createTicket = async (req, res) => {
                 phone,
                 email,
                 description,
-                status: 'INICIADO', // Spanish: INICIADO, EN_SEGUIMIENTO, FINALIZADO
-                revenue: 70000,   // Fixed commission
+                status: 'INICIADO',
+                revenue: 70000,
+                assignedToId: req.user.id, // Assigned to the creator
                 media: {
                     create: req.files ? req.files.map(file => ({ url: file.path })) : [],
                 },
             },
-            include: { media: true },
+            include: { media: true, assignedTo: true },
         });
 
         // Trigger n8n notification
@@ -49,10 +50,17 @@ const createTicket = async (req, res) => {
 
 const getTickets = async (req, res) => {
     try {
-        const tickets = await prisma.ticket.findMany({
+        const query = {
             orderBy: { createdAt: 'desc' },
-            include: { followUps: true, media: true },
-        });
+            include: { followUps: true, media: true, assignedTo: true },
+        };
+
+        // If not SUPERADMIN, only show assigned tickets
+        if (req.user.role !== 'SUPERADMIN') {
+            query.where = { assignedToId: req.user.id };
+        }
+
+        const tickets = await prisma.ticket.findMany(query);
         res.json(tickets);
     } catch (error) {
         res.status(500).json({ message: 'Error al obtener tickets', error: error.message });
@@ -66,7 +74,6 @@ const getTicketByPublicId = async (req, res) => {
     const normalizedId = id.trim().toUpperCase().replace(/-/g, '');
 
     try {
-        // Search for exact match or match without hyphens
         const ticket = await prisma.ticket.findFirst({
             where: {
                 OR: [
@@ -76,7 +83,8 @@ const getTicketByPublicId = async (req, res) => {
             },
             include: {
                 followUps: { orderBy: { createdAt: 'desc' } },
-                media: true
+                media: true,
+                assignedTo: { select: { username: true } } // ONLY include the name for privacy
             },
         });
 
@@ -90,46 +98,32 @@ const getTicketByPublicId = async (req, res) => {
     }
 };
 
-const addFollowUp = async (req, res) => {
+const reassignTicket = async (req, res) => {
     const { id } = req.params;
-    const { content, diagnosis, protocol, bonusInfo, status } = req.body;
-
-    if (!diagnosis) {
-        return res.status(400).json({ message: 'El diagnóstico es obligatorio para agregar un seguimiento' });
-    }
+    const { assignedToId } = req.body;
 
     try {
-        const followUp = await prisma.followUp.create({
-            data: {
-                ticketId: id,
-                content: content || 'Actualización de seguimiento',
-                diagnosis,
-                protocol,
-                bonusInfo,
-            },
-        });
+        if (req.user.role !== 'SUPERADMIN') {
+            return res.status(403).json({ message: 'Solo el administrador puede reasignar tickets' });
+        }
 
-        // Update ticket status (revenue is now fixed at creation)
-        const updatedTicket = await prisma.ticket.update({
+        const ticket = await prisma.ticket.update({
             where: { id },
-            data: { status: status || 'EN_SEGUIMIENTO' },
+            data: { assignedToId: parseInt(assignedToId) },
+            include: { assignedTo: true }
         });
 
-        // Trigger n8n notification for follow-up
-        triggerN8nWebhook({ ...followUp, ticket: updatedTicket }, 'FOLLOW_UP');
-
-        res.status(201).json(followUp);
+        res.json(ticket);
     } catch (error) {
-        console.error('Add FollowUp Error:', error);
-        res.status(500).json({ message: 'Error al agregar seguimiento', error: error.message });
+        res.status(500).json({ message: 'Error al reasignar ticket', error: error.message });
     }
 };
 
 const getStats = async (req, res) => {
     try {
         const totalTickets = await prisma.ticket.count();
-        const resolvedTickets = await prisma.ticket.count({ where: { status: 'FINALIZED' } });
-        const totalRevenueResult = await prisma.ticket.aggregate({
+        const resolvedTickets = await prisma.ticket.count({ where: { status: 'FINALIZADO' } });
+        const revenue = await prisma.ticket.aggregate({
             _sum: { revenue: true }
         });
 
@@ -141,7 +135,7 @@ const getStats = async (req, res) => {
         res.json({
             totalTickets,
             resolvedTickets,
-            totalRevenue: totalRevenueResult._sum.revenue || 0,
+            totalRevenue: revenue._sum.revenue || 0,
             cityStats
         });
     } catch (error) {
@@ -154,5 +148,6 @@ module.exports = {
     getTickets,
     getTicketByPublicId,
     addFollowUp,
-    getStats
+    getStats,
+    reassignTicket
 };

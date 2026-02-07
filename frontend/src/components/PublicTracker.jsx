@@ -67,8 +67,11 @@ const PublicTracker = ({ onBack }) => {
                             animate={{ opacity: 1, y: 0 }}
                             style={{ borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '1.5rem' }}
                         >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                                <h3 style={{ margin: 0 }}>Estado: <span className={`status-badge status-${ticket.status.toLowerCase()}`}>{ticket.status}</span></h3>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                                <div>
+                                    <h3 style={{ margin: 0 }}>Estado: <span className={`status-badge status-${ticket.status.toLowerCase()}`}>{ticket.status}</span></h3>
+                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>Gestor asignado: {ticket.assignedTo?.username || 'Equipo Crismor'}</p>
+                                </div>
                                 <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>{new Date(ticket.createdAt).toLocaleDateString()}</span>
                             </div>
 
