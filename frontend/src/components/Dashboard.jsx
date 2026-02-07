@@ -1,3 +1,7 @@
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { jsPDF } from 'jspdf';
+
 const Dashboard = ({ user: initialUser, onLogout }) => {
     const [user, setUser] = useState(initialUser);
     const [activeTab, setActiveTab] = useState('new');
