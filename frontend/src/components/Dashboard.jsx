@@ -1242,6 +1242,8 @@ const BrandManagement = ({ user }) => {
     const [uploadMode, setUploadMode] = useState('url');
     const [logoUrl, setLogoUrl] = useState('');
     const [logoFile, setLogoFile] = useState(null);
+    const [faviconUrl, setFaviconUrl] = useState('');
+    const [faviconFile, setFaviconFile] = useState(null);
     const [loading, setLoading] = useState(false);
 
     const handleUpdateLogo = async (e) => {
@@ -1249,10 +1251,12 @@ const BrandManagement = ({ user }) => {
         setLoading(true);
 
         const formData = new FormData();
-        if (uploadMode === 'file' && logoFile) {
-            formData.append('logo', logoFile);
+        if (uploadMode === 'file') {
+            if (logoFile) formData.append('logo', logoFile);
+            if (faviconFile) formData.append('favicon', faviconFile);
         } else {
-            formData.append('logoUrl', logoUrl);
+            if (logoUrl) formData.append('logoUrl', logoUrl);
+            if (faviconUrl) formData.append('faviconUrl', faviconUrl);
         }
 
         try {
@@ -1263,8 +1267,9 @@ const BrandManagement = ({ user }) => {
             });
             const data = await response.json();
             if (response.ok) {
-                alert('Logo actualizado exitosamente. Reinicia la página para ver los cambios.');
+                alert('Identidad visual actualizada exitosamente. El favicon y el logo se sincronizarán en unos segundos.');
                 if (data.logoUrl) setLogoUrl(data.logoUrl);
+                if (data.faviconUrl) setFaviconUrl(data.faviconUrl);
             } else {
                 alert(data.message || 'Error al actualizar logo');
             }
@@ -1303,25 +1308,48 @@ const BrandManagement = ({ user }) => {
 
                 <form onSubmit={handleUpdateLogo} className="space-y-6">
                     {uploadMode === 'url' ? (
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-primary dark:text-gray-300 ml-1 uppercase">URL del Logotipo</label>
-                            <input
-                                className="input-dashboard w-full px-4 py-3 rounded-xl bg-white/50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white"
-                                placeholder="https://ejemplo.com/logo.png"
-                                value={logoUrl}
-                                onChange={e => setLogoUrl(e.target.value)}
-                            />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-primary dark:text-gray-300 ml-1 uppercase">URL del Logotipo</label>
+                                <input
+                                    className="input-dashboard w-full px-4 py-3 rounded-xl bg-white/50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white"
+                                    placeholder="https://ejemplo.com/logo.png"
+                                    value={logoUrl}
+                                    onChange={e => setLogoUrl(e.target.value)}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-primary dark:text-gray-300 ml-1 uppercase">URL del Favicon (Icono de Pestaña)</label>
+                                <input
+                                    className="input-dashboard w-full px-4 py-3 rounded-xl bg-white/50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white"
+                                    placeholder="https://ejemplo.com/favicon.png"
+                                    value={faviconUrl}
+                                    onChange={e => setFaviconUrl(e.target.value)}
+                                />
+                            </div>
                         </div>
                     ) : (
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-primary dark:text-gray-300 ml-1 uppercase">Archivo de Imagen</label>
-                            <label className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 dark:bg-black/20 border border-dashed border-gray-300 dark:border-white/20 cursor-pointer hover:bg-white dark:hover:bg-white/5 transition-all group">
-                                <span className="material-symbols-outlined text-gray-400 group-hover:text-accent">upload_file</span>
-                                <span className="text-sm text-gray-500 group-hover:text-primary dark:text-gray-400 truncate">
-                                    {logoFile ? logoFile.name : 'Seleccionar PNG o JPG...'}
-                                </span>
-                                <input type="file" className="hidden" accept="image/*" onChange={e => setLogoFile(e.target.files[0])} />
-                            </label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-primary dark:text-gray-300 ml-1 uppercase">Archivo de Logotipo</label>
+                                <label className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 dark:bg-black/20 border border-dashed border-gray-300 dark:border-white/20 cursor-pointer hover:bg-white dark:hover:bg-white/5 transition-all group">
+                                    <span className="material-symbols-outlined text-gray-400 group-hover:text-accent">upload_file</span>
+                                    <span className="text-sm text-gray-500 group-hover:text-primary dark:text-gray-400 truncate">
+                                        {logoFile ? logoFile.name : 'Cargar Logo...'}
+                                    </span>
+                                    <input type="file" className="hidden" accept="image/*" onChange={e => setLogoFile(e.target.files[0])} />
+                                </label>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-primary dark:text-gray-300 ml-1 uppercase">Archivo de Favicon</label>
+                                <label className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 dark:bg-black/20 border border-dashed border-gray-300 dark:border-white/20 cursor-pointer hover:bg-white dark:hover:bg-white/5 transition-all group">
+                                    <span className="material-symbols-outlined text-gray-400 group-hover:text-accent">settings_suggest</span>
+                                    <span className="text-sm text-gray-500 group-hover:text-primary dark:text-gray-400 truncate">
+                                        {faviconFile ? faviconFile.name : 'Cargar Favicon...'}
+                                    </span>
+                                    <input type="file" className="hidden" accept="image/*" onChange={e => setFaviconFile(e.target.files[0])} />
+                                </label>
+                            </div>
                         </div>
                     )}
 

@@ -12,6 +12,6 @@ router.get('/users', protect, getUsers);
 router.post('/users', protect, upload.single('avatar'), registerUser);
 router.put('/users/:id', protect, upload.single('avatar'), updateUser);
 router.get('/settings', getSettings);
-router.put('/settings', protect, upload.single('logo'), updateSettings);
+router.put('/settings', protect, upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'favicon', maxCount: 1 }]), updateSettings);
 
 module.exports = router;

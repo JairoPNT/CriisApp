@@ -9,6 +9,7 @@ function App() {
   const [view, setView] = useState('welcome');
   const [user, setUser] = useState(null);
   const [logoUrl, setLogoUrl] = useState(null);
+  const [faviconUrl, setFaviconUrl] = useState(null);
   const [activeManagers, setActiveManagers] = useState([]);
   const [lastActivity, setLastActivity] = useState(Date.now());
 
@@ -32,6 +33,9 @@ function App() {
         if (data.logoUrl) {
           setLogoUrl(data.logoUrl);
         }
+        if (data.faviconUrl) {
+          setFaviconUrl(data.faviconUrl);
+        }
       } catch (error) {
         console.error('Error fetching settings:', error);
       }
@@ -49,6 +53,21 @@ function App() {
     fetchSettings();
     fetchActiveManagers();
   }, []);
+
+  // Actualizar Favicon dinámicamente
+  useEffect(() => {
+    if (faviconUrl) {
+      const link = document.querySelector("link[rel~='icon']");
+      if (link) {
+        link.href = faviconUrl;
+      } else {
+        const newLink = document.createElement('link');
+        newLink.rel = 'icon';
+        newLink.href = faviconUrl;
+        document.head.appendChild(newLink);
+      }
+    }
+  }, [faviconUrl]);
 
   // Lógica de inactividad (10 minutos)
   useEffect(() => {

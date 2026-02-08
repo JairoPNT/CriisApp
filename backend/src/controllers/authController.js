@@ -179,26 +179,45 @@ const updateSettings = async (req, res) => {
     }
 
     try {
-        let { logoUrl } = req.body;
+        let { logoUrl, faviconUrl } = req.body;
 
-        // If a file was uploaded, use its path
-        if (req.file) {
-            // Convert backslashes to forward slashes for the URL
-            logoUrl = `${req.protocol}://${req.get('host')}/${req.file.path.replace(/\\/g, '/')}`;
+        // Process files if uploaded via upload.fields
+        if (req.files) {
+            if (req.files['logo'] && req.files['logo'][0]) {
+                logoUrl = `${req.protocol}://${req.get('host')}/${req.files['logo'][0].path.replace(/\\/g, '/')}`;
+            }
+            if (req.files['favicon'] && req.files['favicon'][0]) {
+                faviconUrl = `${req.protocol}://${req.get('host')}/${req.files['favicon'][0].path.replace(/\\/g, '/')}`;
+            }
         }
 
-        if (!logoUrl) {
-            return res.status(400).json({ message: 'Se requiere una URL o un archivo de imagen' });
+        const updates = [];
+        if (logoUrl) {
+            updates.push(prisma.systemSetting.upsert({
+                where: { key: 'logoUrl' },
+                update: { value: logoUrl },
+                create: { key: 'logoUrl', value: logoUrl }
+            }));
+        }
+        if (faviconUrl) {
+            updates.push(prisma.systemSetting.upsert({
+                where: { key: 'faviconUrl' },
+                update: { value: faviconUrl },
+                create: { key: 'faviconUrl', value: faviconUrl }
+            }));
         }
 
-        await prisma.systemSetting.upsert({
-            where: { key: 'logoUrl' },
-            update: { value: logoUrl },
-            create: { key: 'logoUrl', value: logoUrl }
+        if (updates.length > 0) {
+            await Promise.all(updates);
+        }
+
+        res.json({
+            message: 'Configuración actualizada con éxito',
+            logoUrl,
+            faviconUrl
         });
-
-        res.json({ message: 'Configuración actualizada con éxito', logoUrl });
     } catch (error) {
+        console.error('Error en updateSettings:', error);
         res.status(500).json({ message: 'Error al actualizar configuración', error: error.message });
     }
 };
