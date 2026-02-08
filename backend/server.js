@@ -20,6 +20,8 @@ const ticketRoutes = require('./src/routes/ticketRoutes');
 const allowedOrigins = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
+    'https://criisapp-frontend.tcnjej.easypanel.host',
+    'https://criisapp.nariionline.cloud',
     'https://pqr-crismor-pqr-frontend.tcnjej.easypanel.host',
     'https://pqr.nariionline.cloud'
 ];
@@ -32,6 +34,7 @@ app.use(cors({
         // Check if the origin matches any of our allowed patterns
         const isAllowed = allowedOrigins.includes(origin) ||
             origin.includes('nariionline.cloud') ||
+            origin.includes('criisapp') ||
             origin.includes('pqr-frontend') ||
             origin.includes('localhost');
 
