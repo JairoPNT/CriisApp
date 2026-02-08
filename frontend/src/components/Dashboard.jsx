@@ -1244,6 +1244,8 @@ const BrandManagement = ({ user }) => {
     const [logoFile, setLogoFile] = useState(null);
     const [faviconUrl, setFaviconUrl] = useState('');
     const [faviconFile, setFaviconFile] = useState(null);
+    const [horizontalLogoUrl, setHorizontalLogoUrl] = useState('');
+    const [horizontalLogoFile, setHorizontalLogoFile] = useState(null);
     const [loading, setLoading] = useState(false);
 
     const handleUpdateLogo = async (e) => {
@@ -1254,9 +1256,11 @@ const BrandManagement = ({ user }) => {
         if (uploadMode === 'file') {
             if (logoFile) formData.append('logo', logoFile);
             if (faviconFile) formData.append('favicon', faviconFile);
+            if (horizontalLogoFile) formData.append('horizontalLogo', horizontalLogoFile);
         } else {
             if (logoUrl) formData.append('logoUrl', logoUrl);
             if (faviconUrl) formData.append('faviconUrl', faviconUrl);
+            if (horizontalLogoUrl) formData.append('horizontalLogoUrl', horizontalLogoUrl);
         }
 
         try {
@@ -1267,9 +1271,10 @@ const BrandManagement = ({ user }) => {
             });
             const data = await response.json();
             if (response.ok) {
-                alert('Identidad visual actualizada exitosamente. El favicon y el logo se sincronizarán en unos segundos.');
+                alert('Identidad visual actualizada exitosamente.');
                 if (data.logoUrl) setLogoUrl(data.logoUrl);
                 if (data.faviconUrl) setFaviconUrl(data.faviconUrl);
+                if (data.horizontalLogoUrl) setHorizontalLogoUrl(data.horizontalLogoUrl);
             } else {
                 alert(data.message || 'Error al actualizar logo');
             }
@@ -1327,6 +1332,15 @@ const BrandManagement = ({ user }) => {
                                     onChange={e => setFaviconUrl(e.target.value)}
                                 />
                             </div>
+                            <div className="space-y-2 md:col-span-2">
+                                <label className="text-xs font-bold text-primary dark:text-gray-300 ml-1 uppercase">URL del Logotipo Horizontal (Para Home)</label>
+                                <input
+                                    className="input-dashboard w-full px-4 py-3 rounded-xl bg-white/50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white"
+                                    placeholder="https://ejemplo.com/logo-horizontal.png"
+                                    value={horizontalLogoUrl}
+                                    onChange={e => setHorizontalLogoUrl(e.target.value)}
+                                />
+                            </div>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1348,6 +1362,16 @@ const BrandManagement = ({ user }) => {
                                         {faviconFile ? faviconFile.name : 'Cargar Favicon...'}
                                     </span>
                                     <input type="file" className="hidden" accept="image/*" onChange={e => setFaviconFile(e.target.files[0])} />
+                                </label>
+                            </div>
+                            <div className="space-y-2 md:col-span-2">
+                                <label className="text-xs font-bold text-primary dark:text-gray-300 ml-1 uppercase">Archivo de Logotipo Horizontal</label>
+                                <label className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 dark:bg-black/20 border border-dashed border-gray-300 dark:border-white/20 cursor-pointer hover:bg-white dark:hover:bg-white/5 transition-all group">
+                                    <span className="material-symbols-outlined text-gray-400 group-hover:text-accent">dock_to_bottom</span>
+                                    <span className="text-sm text-gray-500 group-hover:text-primary dark:text-gray-400 truncate">
+                                        {horizontalLogoFile ? horizontalLogoFile.name : 'Cargar Logo Horizontal...'}
+                                    </span>
+                                    <input type="file" className="hidden" accept="image/*" onChange={e => setHorizontalLogoFile(e.target.files[0])} />
                                 </label>
                             </div>
                         </div>

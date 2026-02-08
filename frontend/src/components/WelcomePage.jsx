@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import logoSkinHealth from '../assets/logo_skinhealth.png';
 
-const WelcomePage = ({ onNavigate, logo, activeManagers = [] }) => {
+const WelcomePage = ({ onNavigate, logo, horizontalLogo, activeManagers = [] }) => {
     // Para el diseño de Tailwind del documento, usaremos clases de utilidad
     // y manejaremos el modo oscuro mediante la clase 'dark' en el documento raíz.
 
@@ -12,8 +12,8 @@ const WelcomePage = ({ onNavigate, logo, activeManagers = [] }) => {
             {/* Navbar */}
             <nav className="w-full px-6 py-4 lg:px-12 flex justify-between items-center relative z-20">
                 <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white shadow-lg shadow-secondary/20">
-                        <span className="material-symbols-outlined text-xl">spa</span>
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white shadow-lg shadow-secondary/20 overflow-hidden">
+                        <img src={logo || logoSkinHealth} alt="Logo" className="w-6 h-6 object-contain" onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = '<span class="material-symbols-outlined text-xl">spa</span>'; }} />
                     </div>
                     <span className="font-serif text-2xl font-bold tracking-tight text-primary dark:text-white">
                         CriisApp
@@ -40,13 +40,25 @@ const WelcomePage = ({ onNavigate, logo, activeManagers = [] }) => {
                     transition={{ duration: 0.8 }}
                     className="flex-1 text-center lg:text-left space-y-6 w-full"
                 >
-                    <div className="relative inline-block">
-                        <h1 className="text-6xl sm:text-7xl lg:text-8xl font-bold tracking-tighter text-primary/90 dark:text-white font-montserrat transition-colors duration-500">
-                            PQRS
-                        </h1>
-                        <div className="absolute -top-10 -right-6 sm:-top-16 sm:-right-8 text-accent/15 dark:text-accent/25 rotate-12 pointer-events-none select-none">
-                            <span className="material-symbols-outlined text-[100px] sm:text-[140px] lg:text-[180px]">verified_user</span>
-                        </div>
+                    <div className="relative inline-block w-full">
+                        {horizontalLogo ? (
+                            <motion.img
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                src={horizontalLogo}
+                                alt="Branding"
+                                className="h-24 sm:h-32 lg:h-40 w-auto mx-auto lg:mx-0 object-contain mb-4 select-none pointer-events-none drop-shadow-2xl"
+                            />
+                        ) : (
+                            <h1 className="text-6xl sm:text-7xl lg:text-8xl font-bold tracking-tighter text-primary/90 dark:text-white font-montserrat transition-colors duration-500">
+                                PQRS
+                            </h1>
+                        )}
+                        {!horizontalLogo && (
+                            <div className="absolute -top-10 -right-6 sm:-top-16 sm:-right-8 text-accent/15 dark:text-accent/25 rotate-12 pointer-events-none select-none">
+                                <span className="material-symbols-outlined text-[100px] sm:text-[140px] lg:text-[180px]">verified_user</span>
+                            </div>
+                        )}
                     </div>
 
                     <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-primary dark:text-gray-100 leading-tight transition-colors duration-500">

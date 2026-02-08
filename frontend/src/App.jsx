@@ -10,18 +10,22 @@ function App() {
   const [user, setUser] = useState(null);
   const [logoUrl, setLogoUrl] = useState(null);
   const [faviconUrl, setFaviconUrl] = useState(null);
+  const [horizontalLogoUrl, setHorizontalLogoUrl] = useState(null);
   const [activeManagers, setActiveManagers] = useState([]);
   const [lastActivity, setLastActivity] = useState(Date.now());
 
   // Recuperar sesión al cargar
   useEffect(() => {
     const savedUser = localStorage.getItem('pqr_user');
+    console.log('Intentando recuperar sesión:', savedUser ? 'Usuario encontrado' : 'No hay datos');
+
     if (savedUser) {
       try {
         const userData = JSON.parse(savedUser);
         setUser(userData);
         setView('dashboard');
       } catch (err) {
+        console.error('Error al parsear pqr_user:', err);
         localStorage.removeItem('pqr_user');
       }
     }
@@ -30,12 +34,9 @@ function App() {
       try {
         const response = await fetch(`${API_URL}/api/auth/settings`);
         const data = await response.json();
-        if (data.logoUrl) {
-          setLogoUrl(data.logoUrl);
-        }
-        if (data.faviconUrl) {
-          setFaviconUrl(data.faviconUrl);
-        }
+        if (data.logoUrl) setLogoUrl(data.logoUrl);
+        if (data.faviconUrl) setFaviconUrl(data.faviconUrl);
+        if (data.horizontalLogoUrl) setHorizontalLogoUrl(data.horizontalLogoUrl);
       } catch (error) {
         console.error('Error fetching settings:', error);
       }
@@ -111,7 +112,7 @@ function App() {
   const renderView = () => {
     switch (view) {
       case 'welcome':
-        return <WelcomePage onNavigate={setView} logo={logoUrl} activeManagers={activeManagers} />;
+        return <WelcomePage onNavigate={setView} logo={logoUrl} horizontalLogo={horizontalLogoUrl} activeManagers={activeManagers} />;
       case 'login':
         return (
           <LoginPage
@@ -134,10 +135,10 @@ function App() {
             initialLogo={logoUrl}
           />
         ) : (
-          <WelcomePage onNavigate={setView} logo={logoUrl} activeManagers={activeManagers} />
+          <WelcomePage onNavigate={setView} logo={logoUrl} horizontalLogo={horizontalLogoUrl} activeManagers={activeManagers} />
         );
       default:
-        return <WelcomePage onNavigate={setView} logo={logoUrl} activeManagers={activeManagers} />;
+        return <WelcomePage onNavigate={setView} logo={logoUrl} horizontalLogo={horizontalLogoUrl} activeManagers={activeManagers} />;
     }
   };
 

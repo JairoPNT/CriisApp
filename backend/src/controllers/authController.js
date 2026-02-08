@@ -179,7 +179,7 @@ const updateSettings = async (req, res) => {
     }
 
     try {
-        let { logoUrl, faviconUrl } = req.body;
+        let { logoUrl, faviconUrl, horizontalLogoUrl } = req.body;
 
         // Process files if uploaded via upload.fields
         if (req.files) {
@@ -188,6 +188,9 @@ const updateSettings = async (req, res) => {
             }
             if (req.files['favicon'] && req.files['favicon'][0]) {
                 faviconUrl = `${req.protocol}://${req.get('host')}/${req.files['favicon'][0].path.replace(/\\/g, '/')}`;
+            }
+            if (req.files['horizontalLogo'] && req.files['horizontalLogo'][0]) {
+                horizontalLogoUrl = `${req.protocol}://${req.get('host')}/${req.files['horizontalLogo'][0].path.replace(/\\/g, '/')}`;
             }
         }
 
@@ -206,6 +209,13 @@ const updateSettings = async (req, res) => {
                 create: { key: 'faviconUrl', value: faviconUrl }
             }));
         }
+        if (horizontalLogoUrl) {
+            updates.push(prisma.systemSetting.upsert({
+                where: { key: 'horizontalLogoUrl' },
+                update: { value: horizontalLogoUrl },
+                create: { key: 'horizontalLogoUrl', value: horizontalLogoUrl }
+            }));
+        }
 
         if (updates.length > 0) {
             await Promise.all(updates);
@@ -214,7 +224,8 @@ const updateSettings = async (req, res) => {
         res.json({
             message: 'Configuración actualizada con éxito',
             logoUrl,
-            faviconUrl
+            faviconUrl,
+            horizontalLogoUrl
         });
     } catch (error) {
         console.error('Error en updateSettings:', error);
