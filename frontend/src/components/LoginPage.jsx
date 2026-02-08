@@ -104,6 +104,9 @@ const LoginPage = ({ onLogin, onBack, logo }) => {
                     </motion.button>
                 </form>
             </motion.div>
+            <div style={{ position: 'fixed', bottom: '10px', right: '10px', fontSize: '10px', opacity: 0.5 }}>
+                API: {API_URL}
+            </div>
         </div>
     );
 };
