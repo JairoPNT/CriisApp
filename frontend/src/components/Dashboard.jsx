@@ -129,7 +129,15 @@ const Dashboard = ({ user: initialUser, onLogout, initialLogo }) => {
                     ))}
                 </nav>
 
-                <div className="p-4 border-t border-white/10">
+                <div className="p-4 border-t border-white/10 space-y-2">
+                    <button
+                        onClick={() => document.documentElement.classList.toggle('dark')}
+                        className="flex items-center justify-center gap-2 w-full py-3 border border-white/10 rounded-lg text-sm text-gray-300 hover:bg-white/5 transition-all group"
+                    >
+                        <span className="material-symbols-outlined text-lg group-hover:rotate-45 transition-transform dark:hidden block">dark_mode</span>
+                        <span className="material-symbols-outlined text-lg group-hover:rotate-45 transition-transform hidden dark:block">light_mode</span>
+                        Cambiar Tema
+                    </button>
                     <button onClick={onLogout} className="flex items-center justify-center gap-2 w-full py-3 border border-white/20 rounded-lg text-sm text-gray-300 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 transition-all">
                         <span className="material-symbols-outlined text-lg">logout</span>
                         Cerrar Sesión
@@ -149,9 +157,18 @@ const Dashboard = ({ user: initialUser, onLogout, initialLogo }) => {
                         <span className="material-symbols-outlined text-primary dark:text-accent text-2xl">spa</span>
                         <span className="font-serif font-bold text-lg dark:text-white">CriisApp</span>
                     </div>
-                    <button onClick={toggleSidebar} className="p-2 rounded-lg text-primary dark:text-white hover:bg-gray-100 dark:hover:bg-white/10">
-                        <span className="material-symbols-outlined text-2xl">menu</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => document.documentElement.classList.toggle('dark')}
+                            className="p-2 rounded-lg text-primary dark:text-white hover:bg-gray-100 dark:hover:bg-white/10"
+                        >
+                            <span className="material-symbols-outlined text-2xl dark:hidden block">dark_mode</span>
+                            <span className="material-symbols-outlined text-2xl hidden dark:block">light_mode</span>
+                        </button>
+                        <button onClick={toggleSidebar} className="p-2 rounded-lg text-primary dark:text-white hover:bg-gray-100 dark:hover:bg-white/10">
+                            <span className="material-symbols-outlined text-2xl">menu</span>
+                        </button>
+                    </div>
                 </header>
 
                 <div className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-12 relative no-scrollbar scroll-smooth">
