@@ -3,6 +3,7 @@ import WelcomePage from './components/WelcomePage';
 import LoginPage from './components/LoginPage';
 import PublicTracker from './components/PublicTracker';
 import Dashboard from './components/Dashboard';
+import API_URL from './api';
 
 function App() {
   const [view, setView] = useState('welcome');
@@ -12,7 +13,7 @@ function App() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:3000/api/auth/settings');
+        const response = await fetch(`${API_URL}/api/auth/settings`);
         const data = await response.json();
         if (data.logoUrl) {
           setLogoUrl(data.logoUrl);

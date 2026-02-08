@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import logoSkinHealth from '../assets/logo_skinhealth.png';
+import API_URL from '../api';
 
 const PublicTracker = ({ onBack, logo }) => {
     const [ticketId, setTicketId] = useState('');
@@ -15,7 +16,7 @@ const PublicTracker = ({ onBack, logo }) => {
         setLoading(true);
 
         try {
-            const response = await fetch(`http://127.0.0.1:3000/api/tickets/public/${ticketId.trim().toUpperCase()}`);
+            const response = await fetch(`${API_URL}/api/tickets/public/${ticketId.trim().toUpperCase()}`);
             const data = await response.json();
 
             if (response.ok) {

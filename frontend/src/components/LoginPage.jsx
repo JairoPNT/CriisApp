@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import logoSkinHealth from '../assets/logo_skinhealth.png';
 
+import API_URL from '../api';
+
 const LoginPage = ({ onLogin, onBack, logo }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -14,7 +16,7 @@ const LoginPage = ({ onLogin, onBack, logo }) => {
         setLoading(true);
 
         try {
-            const response = await fetch('http://127.0.0.1:3000/api/auth/login', {
+            const response = await fetch(`${API_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password }),

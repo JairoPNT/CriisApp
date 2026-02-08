@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { jsPDF } from 'jspdf';
 import logoSkinHealth from '../assets/logo_skinhealth.png';
+import API_URL from '../api';
 
 const Dashboard = ({ user: initialUser, onLogout, initialLogo }) => {
     const [user, setUser] = useState(initialUser);
@@ -19,7 +20,7 @@ const Dashboard = ({ user: initialUser, onLogout, initialLogo }) => {
 
     const fetchTickets = async () => {
         try {
-            const response = await fetch('http://127.0.0.1:3000/api/tickets', {
+            const response = await fetch(`${API_URL}/api/tickets`, {
                 headers: { 'Authorization': `Bearer ${user.token}` }
             });
             const data = await response.json();
@@ -30,7 +31,7 @@ const Dashboard = ({ user: initialUser, onLogout, initialLogo }) => {
     const fetchStats = async (filters = {}) => {
         try {
             const queryParams = new URLSearchParams(filters).toString();
-            const response = await fetch(`http://127.0.0.1:3000/api/tickets/stats?${queryParams}`, {
+            const response = await fetch(`${API_URL}/api/tickets/stats?${queryParams}`, {
                 headers: { 'Authorization': `Bearer ${user.token}` }
             });
             const data = await response.json();
@@ -40,7 +41,7 @@ const Dashboard = ({ user: initialUser, onLogout, initialLogo }) => {
 
     const fetchUsers = async () => {
         try {
-            const response = await fetch('http://127.0.0.1:3000/api/auth/users', {
+            const response = await fetch(`${API_URL}/api/auth/users`, {
                 headers: { 'Authorization': `Bearer ${user.token}` }
             });
             const data = await response.json();
@@ -491,7 +492,7 @@ const UserManagement = ({ user, users, onUpdate }) => {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await fetch(`http://127.0.0.1:3000/api/auth/users/${editingUser.id}`, {
+            const response = await fetch(`${API_URL}/api/auth/users/${editingUser.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user.token}` },
                 body: JSON.stringify(editingUser)
@@ -589,7 +590,7 @@ const NewUserForm = ({ user, onDone }) => {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await fetch('http://127.0.0.1:3000/api/auth/users', {
+            const response = await fetch(`${API_URL}/api/auth/users`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user.token}` },
                 body: JSON.stringify(formData)
@@ -722,7 +723,7 @@ const ProfileView = ({ user, onUpdate }) => {
         setLoading(true);
         setMessage(null);
         try {
-            const response = await fetch('http://127.0.0.1:3000/api/auth/profile', {
+            const response = await fetch(`${API_URL}/api/auth/profile`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user.token}` },
                 body: JSON.stringify(formData)
@@ -793,7 +794,7 @@ const BrandManagement = ({ user }) => {
         }
 
         try {
-            const response = await fetch('http://127.0.0.1:3000/api/auth/settings', {
+            const response = await fetch(`${API_URL}/api/auth/settings`, {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${user.token}` },
                 body: formData
