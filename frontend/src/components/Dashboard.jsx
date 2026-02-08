@@ -659,11 +659,19 @@ const UserManagement = ({ user, users, onUpdate, isMobile }) => {
 };
 
 const NewUserForm = ({ user, onDone }) => {
-    const [formData, setFormData] = useState({ username: '', name: '', email: '', password: '', role: 'GESTOR', phone: '' });
+    const [formData, setFormData] = useState({ username: '', name: '', email: '', password: '', confirmPassword: '', role: 'GESTOR', phone: '' });
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (formData.password !== formData.confirmPassword) {
+            alert('Las contraseñas no coinciden');
+            return;
+        }
+
         setLoading(true);
         try {
             const response = await fetch(`${API_URL}/api/auth/users`, {
@@ -692,7 +700,33 @@ const NewUserForm = ({ user, onDone }) => {
             </div>
             <div className="form-group">
                 <label className="form-label">Contraseña</label>
-                <input className="input-field" type="password" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} required />
+                <div className="password-container">
+                    <input
+                        className="input-field"
+                        type={showPassword ? "text" : "password"}
+                        value={formData.password}
+                        onChange={e => setFormData({ ...formData, password: e.target.value })}
+                        required
+                    />
+                    <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
+                        {showPassword ? '👁️' : '🙈'}
+                    </button>
+                </div>
+            </div>
+            <div className="form-group">
+                <label className="form-label">Confirmar Contraseña</label>
+                <div className="password-container">
+                    <input
+                        className="input-field"
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={formData.confirmPassword}
+                        onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
+                        required
+                    />
+                    <button type="button" className="password-toggle" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                        {showConfirmPassword ? '👁️' : '🙈'}
+                    </button>
+                </div>
             </div>
             <div className="form-group">
                 <label className="form-label">Correo</label>
@@ -789,13 +823,23 @@ const ProfileView = ({ user, onUpdate, isMobile }) => {
         name: user.name || '',
         email: user.email || '',
         currentPassword: '',
-        newPassword: ''
+        newPassword: '',
+        confirmNewPassword: ''
     });
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState(null);
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (formData.newPassword && formData.newPassword !== formData.confirmNewPassword) {
+            setMessage({ type: 'error', text: 'Las nuevas contraseñas no coinciden' });
+            return;
+        }
+
         setLoading(true);
         setMessage(null);
         try {
@@ -836,11 +880,30 @@ const ProfileView = ({ user, onUpdate, isMobile }) => {
                     <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Seguridad (Opcional)</p>
                     <div className="form-group">
                         <label className="form-label">Contraseña Actual</label>
-                        <input className="input-field" type="password" value={formData.currentPassword} onChange={e => setFormData({ ...formData, currentPassword: e.target.value })} />
+                        <div className="password-container">
+                            <input className="input-field" type={showCurrentPassword ? "text" : "password"} value={formData.currentPassword} onChange={e => setFormData({ ...formData, currentPassword: e.target.value })} />
+                            <button type="button" className="password-toggle" onClick={() => setShowCurrentPassword(!showCurrentPassword)}>
+                                {showCurrentPassword ? '👁️' : '🙈'}
+                            </button>
+                        </div>
                     </div>
                     <div className="form-group">
                         <label className="form-label">Nueva Contraseña</label>
-                        <input className="input-field" type="password" value={formData.newPassword} onChange={e => setFormData({ ...formData, newPassword: e.target.value })} />
+                        <div className="password-container">
+                            <input className="input-field" type={showNewPassword ? "text" : "password"} value={formData.newPassword} onChange={e => setFormData({ ...formData, newPassword: e.target.value })} />
+                            <button type="button" className="password-toggle" onClick={() => setShowNewPassword(!showNewPassword)}>
+                                {showNewPassword ? '👁️' : '🙈'}
+                            </button>
+                        </div>
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">Confirmar Nueva Contraseña</label>
+                        <div className="password-container">
+                            <input className="input-field" type={showConfirmNewPassword ? "text" : "password"} value={formData.confirmNewPassword} onChange={e => setFormData({ ...formData, confirmNewPassword: e.target.value })} />
+                            <button type="button" className="password-toggle" onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}>
+                                {showConfirmNewPassword ? '👁️' : '🙈'}
+                            </button>
+                        </div>
                     </div>
                     {message && <p style={{ color: message.type === 'success' ? 'var(--success)' : 'var(--error)', marginBottom: '1rem' }}>{message.text}</p>}
                     <button type="submit" className="btn-primary" disabled={loading}>{loading ? 'Actualizando...' : 'Guardar Cambios'}</button>
