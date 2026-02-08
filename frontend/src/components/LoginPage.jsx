@@ -25,6 +25,7 @@ const LoginPage = ({ onLogin, onBack, logo }) => {
             const data = await response.json();
 
             if (response.ok) {
+                localStorage.setItem('pqr_user', JSON.stringify(data));
                 onLogin(data);
             } else {
                 setError(data.message || 'Error al iniciar sesión');

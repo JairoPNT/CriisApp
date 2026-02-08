@@ -9,8 +9,21 @@ function App() {
   const [view, setView] = useState('welcome');
   const [user, setUser] = useState(null);
   const [logoUrl, setLogoUrl] = useState(null);
+  const [lastActivity, setLastActivity] = useState(Date.now());
 
+  // Recuperar sesión al cargar
   useEffect(() => {
+    const savedUser = localStorage.getItem('pqr_user');
+    if (savedUser) {
+      try {
+        const userData = JSON.parse(savedUser);
+        setUser(userData);
+        setView('dashboard');
+      } catch (err) {
+        localStorage.removeItem('pqr_user');
+      }
+    }
+
     const fetchSettings = async () => {
       try {
         const response = await fetch(`${API_URL}/api/auth/settings`);
@@ -25,19 +38,68 @@ function App() {
     fetchSettings();
   }, []);
 
+  // Lógica de inactividad (10 minutos)
+  useEffect(() => {
+    if (!user) return;
+
+    const INACTIVITY_LIMIT = 10 * 60 * 1000; // 10 minutos
+
+    const handleUserActivity = () => {
+      setLastActivity(Date.now());
+    };
+
+    const checkInactivity = setInterval(() => {
+      const now = Date.now();
+      if (now - lastActivity > INACTIVITY_LIMIT) {
+        handleLogout();
+        alert('Sesión cerrada por inactividad');
+      }
+    }, 10000); // Revisar cada 10 segundos
+
+    // Listeners para actividad
+    window.addEventListener('mousemove', handleUserActivity);
+    window.addEventListener('keypress', handleUserActivity);
+    window.addEventListener('click', handleUserActivity);
+    window.addEventListener('touchstart', handleUserActivity);
+
+    return () => {
+      clearInterval(checkInactivity);
+      window.removeEventListener('mousemove', handleUserActivity);
+      window.removeEventListener('keypress', handleUserActivity);
+      window.removeEventListener('click', handleUserActivity);
+      window.removeEventListener('touchstart', handleUserActivity);
+    };
+  }, [user, lastActivity]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('pqr_user');
+    setUser(null);
+    setView('welcome');
+  };
+
   const renderView = () => {
     switch (view) {
       case 'welcome':
         return <WelcomePage onNavigate={setView} logo={logoUrl} />;
       case 'login':
-        return <LoginPage onLogin={(userData) => { setUser(userData); setView('dashboard'); }} onBack={() => setView('welcome')} logo={logoUrl} />;
+        return (
+          <LoginPage
+            onLogin={(userData) => {
+              setUser(userData);
+              setView('dashboard');
+              setLastActivity(Date.now());
+            }}
+            onBack={() => setView('welcome')}
+            logo={logoUrl}
+          />
+        );
       case 'public':
         return <PublicTracker onBack={() => setView('welcome')} logo={logoUrl} />;
       case 'dashboard':
         return user ? (
           <Dashboard
             user={user}
-            onLogout={() => { setUser(null); setView('welcome'); }}
+            onLogout={handleLogout}
             initialLogo={logoUrl}
           />
         ) : (
