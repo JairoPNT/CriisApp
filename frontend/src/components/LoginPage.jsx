@@ -42,7 +42,7 @@ const LoginPage = ({ onLogin, onBack, logo }) => {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="glass-card"
-                style={{ width: '100%', maxWidth: '400px', border: '5px solid red' }}
+                style={{ width: '100%', maxWidth: '400px' }}
             >
                 <button onClick={onBack} style={{ background: 'none', color: 'var(--text-muted)', marginBottom: '1.5rem', padding: 0, fontWeight: 500 }}>
                     ← Volver
@@ -104,9 +104,6 @@ const LoginPage = ({ onLogin, onBack, logo }) => {
                     </motion.button>
                 </form>
             </motion.div>
-            <div style={{ position: 'fixed', bottom: '10px', right: '10px', fontSize: '10px', opacity: 0.5 }}>
-                API: {API_URL}
-            </div>
         </div>
     );
 };
