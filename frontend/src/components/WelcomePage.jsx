@@ -44,8 +44,8 @@ const WelcomePage = ({ onNavigate, logo, activeManagers = [] }) => {
                         <h1 className="text-6xl sm:text-7xl lg:text-8xl font-bold tracking-tighter text-primary/90 dark:text-white font-montserrat transition-colors duration-500">
                             PQRS
                         </h1>
-                        <div className="absolute -top-4 -right-6 sm:-top-6 sm:-right-8 text-accent/20 dark:text-accent/40 rotate-12">
-                            <span className="material-symbols-outlined text-7xl sm:text-8xl">verified_user</span>
+                        <div className="absolute -top-10 -right-6 sm:-top-16 sm:-right-8 text-accent/15 dark:text-accent/25 rotate-12 pointer-events-none select-none">
+                            <span className="material-symbols-outlined text-[100px] sm:text-[140px] lg:text-[180px]">verified_user</span>
                         </div>
                     </div>
 
