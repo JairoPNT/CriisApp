@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import logoSkinHealth from '../assets/logo_skinhealth.png';
 
-const WelcomePage = ({ onNavigate, logo, horizontalLogo, activeManagers = [] }) => {
+const WelcomePage = ({ onNavigate, logo, favicon, horizontalLogo, activeManagers = [] }) => {
     // Para el diseño de Tailwind del documento, usaremos clases de utilidad
     // y manejaremos el modo oscuro mediante la clase 'dark' en el documento raíz.
 
@@ -12,8 +12,16 @@ const WelcomePage = ({ onNavigate, logo, horizontalLogo, activeManagers = [] }) 
             {/* Navbar */}
             <nav className="w-full px-6 py-4 lg:px-12 flex justify-between items-center relative z-20">
                 <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white shadow-lg shadow-secondary/20 overflow-hidden">
-                        <img src={logo || logoSkinHealth} alt="Logo" className="w-6 h-6 object-contain" onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = '<span class="material-symbols-outlined text-xl">spa</span>'; }} />
+                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-primary shadow-md border border-gray-100 overflow-hidden">
+                        <img
+                            src={favicon || logo || logoSkinHealth}
+                            alt="Logo"
+                            className="w-7 h-7 object-contain"
+                            onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.parentElement.innerHTML = '<span class="material-symbols-outlined text-xl text-primary">spa</span>';
+                            }}
+                        />
                     </div>
                     <span className="font-serif text-2xl font-bold tracking-tight text-primary dark:text-white">
                         CriisApp

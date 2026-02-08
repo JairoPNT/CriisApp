@@ -115,7 +115,7 @@ function App() {
   const renderView = () => {
     switch (view) {
       case 'welcome':
-        return <WelcomePage onNavigate={setView} logo={logoUrl} horizontalLogo={horizontalLogoUrl} activeManagers={activeManagers} />;
+        return <WelcomePage onNavigate={setView} logo={logoUrl} favicon={faviconUrl} horizontalLogo={horizontalLogoUrl} activeManagers={activeManagers} />;
       case 'login':
         return (
           <LoginPage
@@ -138,10 +138,10 @@ function App() {
             initialLogo={logoUrl}
           />
         ) : (
-          <WelcomePage onNavigate={setView} logo={logoUrl} horizontalLogo={horizontalLogoUrl} activeManagers={activeManagers} />
+          <WelcomePage onNavigate={setView} logo={logoUrl} favicon={faviconUrl} horizontalLogo={horizontalLogoUrl} activeManagers={activeManagers} />
         );
       default:
-        return <WelcomePage onNavigate={setView} logo={logoUrl} horizontalLogo={horizontalLogoUrl} activeManagers={activeManagers} />;
+        return <WelcomePage onNavigate={setView} logo={logoUrl} favicon={faviconUrl} horizontalLogo={horizontalLogoUrl} activeManagers={activeManagers} />;
     }
   };
 
