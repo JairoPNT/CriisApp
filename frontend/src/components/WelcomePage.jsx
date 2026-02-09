@@ -12,20 +12,15 @@ const WelcomePage = ({ onNavigate, logo, favicon, horizontalLogo, activeManagers
             {/* Navbar */}
             <nav className="w-full px-6 py-4 lg:px-12 flex justify-between items-center relative z-20">
                 <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-primary shadow-md border border-gray-100 overflow-hidden">
-                        <img
-                            src={favicon || logo || logoSkinHealth}
-                            alt="Logo"
-                            className="w-7 h-7 object-contain"
-                            onError={(e) => {
-                                e.target.style.display = 'none';
-                                e.target.parentElement.innerHTML = '<span class="material-symbols-outlined text-xl text-primary">spa</span>';
-                            }}
-                        />
-                    </div>
-                    <span className="font-serif text-2xl font-bold tracking-tight text-primary dark:text-white">
-                        CriisApp
-                    </span>
+                    <img
+                        src={horizontalLogo || logo || logoSkinHealth}
+                        alt="Logo"
+                        className="h-10 w-auto object-contain select-none"
+                        onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.parentElement.innerHTML = '<span class="material-symbols-outlined text-4xl text-primary">spa</span>';
+                        }}
+                    />
                 </div>
 
                 {/* Botón Login Sutil para Gestor */}
@@ -48,25 +43,15 @@ const WelcomePage = ({ onNavigate, logo, favicon, horizontalLogo, activeManagers
                     transition={{ duration: 0.8 }}
                     className="flex-1 text-center lg:text-left space-y-6 w-full"
                 >
-                    <div className="relative inline-block w-full">
-                        {horizontalLogo ? (
-                            <motion.img
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                src={horizontalLogo}
-                                alt="Branding"
-                                className="h-24 sm:h-32 lg:h-40 w-auto mx-auto lg:mx-0 object-contain mb-4 select-none pointer-events-none drop-shadow-2xl"
-                            />
-                        ) : (
+                    <div className="overflow-hidden w-full">
+                        <div className="relative inline-block w-full">
                             <h1 className="text-6xl sm:text-7xl lg:text-8xl font-bold tracking-tighter text-primary/90 dark:text-white font-montserrat transition-colors duration-500">
                                 PQRS
                             </h1>
-                        )}
-                        {!horizontalLogo && (
                             <div className="absolute -top-10 -right-6 sm:-top-16 sm:-right-8 text-accent/15 dark:text-accent/25 rotate-12 pointer-events-none select-none">
                                 <span className="material-symbols-outlined text-[100px] sm:text-[140px] lg:text-[180px]">verified_user</span>
                             </div>
-                        )}
+                        </div>
                     </div>
 
                     <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-primary dark:text-gray-100 leading-tight transition-colors duration-500">
@@ -125,7 +110,7 @@ const WelcomePage = ({ onNavigate, logo, favicon, horizontalLogo, activeManagers
             <footer className="w-full px-6 py-6 border-t border-primary/5 dark:border-white/5 bg-white/30 dark:bg-black/20 backdrop-blur-sm mt-auto relative z-10 transition-colors">
                 <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500 dark:text-gray-400 font-medium">
                     <div className="text-center md:text-left">
-                        <p>© 2026 CriisApp <span className="mx-2 text-accent">•</span> Excelance Dermatológica</p>
+                        <p>© 2026 CriisApp <span className="mx-2 text-accent">•</span> Excelencia Dermatológica</p>
                         <p className="text-[10px] text-gray-400/80 dark:text-gray-500/80 mt-1">
                             Desarrollado por <a href="https://maeva.studio" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors font-bold">Maeva Studio</a>
                         </p>
@@ -163,7 +148,7 @@ const WelcomePage = ({ onNavigate, logo, favicon, horizontalLogo, activeManagers
                 <span className="material-symbols-outlined text-xl group-hover:rotate-180 transition-transform duration-500 hidden dark:block">light_mode</span>
             </button>
 
-        </div>
+        </div >
     );
 };
 

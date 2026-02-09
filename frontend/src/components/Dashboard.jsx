@@ -11,8 +11,11 @@ const Dashboard = ({ user: initialUser, onLogout, initialLogo }) => {
     const [stats, setStats] = useState(null);
     const [users, setUsers] = useState([]);
     const [logoUrl, setLogoUrl] = useState(initialLogo);
+    const [horizontalLogoUrl, setHorizontalLogoUrl] = useState('');
+    const [panelLogoUrl, setPanelLogoUrl] = useState('');
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+    const [showArchived, setShowArchived] = useState(false);
 
     useEffect(() => {
         const handleResize = () => {
@@ -20,15 +23,38 @@ const Dashboard = ({ user: initialUser, onLogout, initialLogo }) => {
             if (window.innerWidth >= 1024) setIsSidebarOpen(false);
         };
         window.addEventListener('resize', handleResize);
+
+        // Sync user role and profile on mount
+        const syncProfile = async () => {
+            try {
+                const response = await fetch(`${API_URL}/api/auth/profile`, {
+                    headers: { 'Authorization': `Bearer ${user.token}` }
+                });
+                if (response.ok) {
+                    const latestUser = await response.json();
+                    setUser(prev => ({ ...prev, ...latestUser }));
+                    localStorage.setItem('pqr_user', JSON.stringify({ ...user, ...latestUser }));
+                }
+            } catch (err) {
+                console.error('Error syncing profile:', err);
+            }
+        };
+
+        syncProfile();
         fetchTickets();
         fetchStats();
+        fetchSettings();
         if (user.role === 'SUPERADMIN') fetchUsers();
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    useEffect(() => {
+        fetchTickets();
+    }, [showArchived]);
+
     const fetchTickets = async () => {
         try {
-            const response = await fetch(`${API_URL}/api/tickets`, {
+            const response = await fetch(`${API_URL}/api/tickets?archived=${showArchived}`, {
                 headers: { 'Authorization': `Bearer ${user.token}` }
             });
             const data = await response.json();
@@ -57,6 +83,18 @@ const Dashboard = ({ user: initialUser, onLogout, initialLogo }) => {
         } catch (err) { console.error('Error fetching users:', err); }
     };
 
+    const fetchSettings = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/auth/settings`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.logoUrl) setLogoUrl(data.logoUrl);
+                if (data.horizontalLogoUrl) setHorizontalLogoUrl(data.horizontalLogoUrl);
+                if (data.panelLogoUrl) setPanelLogoUrl(data.panelLogoUrl);
+            }
+        } catch (err) { console.error('Error fetching settings:', err); }
+    };
+
     const handleProfileUpdate = (updatedData) => {
         const newUser = { ...user, ...updatedData };
         setUser(newUser);
@@ -81,15 +119,28 @@ const Dashboard = ({ user: initialUser, onLogout, initialLogo }) => {
         navItems.push({ id: 'settings', label: 'Configuración', icon: 'settings' });
     }
 
+    const viewTitleMap = {
+        'new': { title: 'Registrar Nuevo Caso', desc: 'Ingresa los detalles del paciente para generar un número de radicado PQR.' },
+        'list': {
+            title: showArchived ? `Historial de Archivados (${tickets.length})` : `Gestión de Casos (${tickets.length})`,
+            desc: showArchived ? 'Consulta tickets que han sido archivados para histórico.' : 'Administra y realiza el seguimiento de las PQRs registradas.'
+        },
+        'reports': { title: 'Informes de Gestión', desc: 'Genera reportes detallados y descarga en formato PDF.' },
+        'stats': { title: 'Análisis de Gestión', desc: 'Monitoreo en tiempo real del rendimiento y distribución de PQRs.' },
+        'users': { title: 'Gestión de Usuarios', desc: 'Administra los accesos y roles de los gestores del sistema.' },
+        'profile': { title: 'Mi Perfil', desc: 'Gestiona tu información personal y credenciales de acceso.' },
+        'settings': { title: 'Identidad Visual', desc: 'Personaliza el logotipo y favicon de la aplicación.' }
+    };
+
     const renderContent = () => {
         switch (view) {
             case 'new': return <NewTicketForm user={user} onSuccess={() => { setView('list'); fetchTickets(); }} isMobile={isMobile} />;
-            case 'list': return <TicketList tickets={tickets} user={user} users={users} onUpdate={fetchTickets} isMobile={isMobile} />;
+            case 'list': return <TicketList tickets={tickets} user={user} users={users} onUpdate={fetchTickets} isMobile={isMobile} showArchived={showArchived} setShowArchived={setShowArchived} />;
             case 'reports': return <ReportsView tickets={tickets} user={user} users={users} isMobile={isMobile} />;
             case 'stats': return <StatsView stats={stats} users={users} user={user} onRefresh={fetchStats} isMobile={isMobile} />;
             case 'users': return <UserManagement user={user} users={users} onUpdate={fetchUsers} isMobile={isMobile} />;
             case 'profile': return <ProfileView user={user} onUpdate={handleProfileUpdate} isMobile={isMobile} />;
-            case 'settings': return <BrandManagement user={user} onLogoUpdate={(url) => setLogoUrl(url)} />;
+            case 'settings': return <BrandManagement user={user} />;
             default: return <NewTicketForm user={user} onSuccess={() => { setView('list'); fetchTickets(); }} isMobile={isMobile} />;
         }
     };
@@ -98,11 +149,18 @@ const Dashboard = ({ user: initialUser, onLogout, initialLogo }) => {
         <div className="flex bg-light dark:bg-darkbg text-primary dark:text-gray-200 h-screen overflow-hidden transition-colors duration-500 w-full">
             <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-sidebar text-white transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col shadow-2xl lg:shadow-none h-full`}>
                 <div className="p-8 flex flex-col items-center border-b border-white/10">
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center mb-3 border border-white/10 shadow-inner overflow-hidden">
-                        <img src={logoUrl || logoSkinHealth} alt="Logo" className="w-12 h-12 object-contain" onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = '<span class="material-symbols-outlined text-4xl text-accent">spa</span>'; }} />
+                    <div className="w-32 h-32 flex items-center justify-center mb-4 transition-all">
+                        <img
+                            src={panelLogoUrl || logoUrl || logoSkinHealth}
+                            alt="Panel Logo"
+                            className="w-full h-full object-contain drop-shadow-2xl"
+                            onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.parentElement.innerHTML = '<span class="material-symbols-outlined text-6xl text-accent">spa</span>';
+                            }}
+                        />
                     </div>
-                    <h2 className="font-serif text-2xl font-bold tracking-tight text-white">CriisApp</h2>
-                    <p className="text-[10px] text-gray-400 uppercase tracking-widest mt-1">Panel Administrativo</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.3em] mt-1 text-center">Panel Administrativo</p>
                 </div>
 
                 <div onClick={() => { setView('profile'); if (isMobile) setIsSidebarOpen(false); }} className="px-6 py-6 flex items-center gap-4 bg-black/20 mx-4 mt-6 rounded-xl border border-white/5 cursor-pointer hover:bg-black/30 transition-all group overflow-hidden">
@@ -152,34 +210,61 @@ const Dashboard = ({ user: initialUser, onLogout, initialLogo }) => {
             </AnimatePresence>
 
             <main className="flex-1 flex flex-col h-full lg:ml-72 relative transition-all duration-300">
-                <header className="h-16 flex items-center justify-between px-4 lg:hidden bg-white/80 dark:bg-sidebar/80 backdrop-blur-md border-b border-gray-200 dark:border-white/5 z-30 sticky top-0">
-                    <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-primary dark:text-accent text-2xl">spa</span>
-                        <span className="font-serif font-bold text-lg dark:text-white">CriisApp</span>
+                <header className="h-16 flex items-center justify-between px-4 lg:hidden bg-white/90 dark:bg-sidebar/90 backdrop-blur-xl border-b border-gray-200 dark:border-white/5 z-30 sticky top-0">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                        <img
+                            src={horizontalLogoUrl || logoUrl || logoSkinHealth}
+                            alt="Logo"
+                            className="h-8 w-auto object-contain"
+                            onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.parentElement.innerHTML = '<span class="material-symbols-outlined text-accent text-xl shrink-0">spa</span><span class="font-serif font-bold text-sm dark:text-white truncate">CriisApp</span>';
+                            }}
+                        />
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                         <button
                             onClick={() => document.documentElement.classList.toggle('dark')}
                             className="p-2 rounded-lg text-primary dark:text-white hover:bg-gray-100 dark:hover:bg-white/10"
                         >
-                            <span className="material-symbols-outlined text-2xl dark:hidden block">dark_mode</span>
-                            <span className="material-symbols-outlined text-2xl hidden dark:block">light_mode</span>
+                            <span className="material-symbols-outlined text-xl dark:hidden block">dark_mode</span>
+                            <span className="material-symbols-outlined text-xl hidden dark:block">light_mode</span>
                         </button>
                         <button onClick={toggleSidebar} className="p-2 rounded-lg text-primary dark:text-white hover:bg-gray-100 dark:hover:bg-white/10">
-                            <span className="material-symbols-outlined text-2xl">menu</span>
+                            <span className="material-symbols-outlined text-xl">menu</span>
                         </button>
                     </div>
                 </header>
 
                 <div className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-12 relative no-scrollbar scroll-smooth">
-                    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-secondary/5 rounded-full blur-3xl -z-10 pointer-events-none transition-colors duration-500" />
-                    <motion.div key={view} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="max-w-5xl mx-auto w-full">
-                        {renderContent()}
-                    </motion.div>
-                    <footer className="mt-12 text-center text-[10px] text-gray-400 pb-6 space-y-1">
-                        <p>© 2026 CriisApp - Panel de Gestión v2.0</p>
-                        <p>Desarrollado por <a href="https://maeva.studio" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors font-semibold">Maeva Studio</a></p>
-                    </footer>
+                    <div className="max-w-5xl mx-auto w-full">
+                        {/* Centralized Page Header */}
+                        <motion.div
+                            key={`header-${view}`}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="mb-8 lg:mb-12"
+                        >
+                            <h1 className="font-serif text-3xl md:text-4xl font-bold text-primary dark:text-white mb-2 leading-tight">
+                                {viewTitleMap[view]?.title}
+                            </h1>
+                            <p className="text-gray-500 dark:text-gray-400 text-sm md:text-base max-w-2xl">
+                                {viewTitleMap[view]?.desc}
+                            </p>
+                        </motion.div>
+                        <motion.div
+                            key={view}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4 }}
+                        >
+                            {renderContent()}
+                        </motion.div>
+                        <footer className="mt-12 text-center text-[10px] text-gray-400 pb-6 space-y-1">
+                            <p>© 2026 CriisApp - Panel de Gestión v2.0</p>
+                            <p>Desarrollado por <a href="https://maeva.studio" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors font-semibold">Maeva Studio</a></p>
+                        </footer>
+                    </div>
                 </div>
             </main>
         </div>
@@ -201,7 +286,7 @@ const NewTicketForm = ({ user, onSuccess, isMobile }) => {
 
         const data = new FormData();
         Object.keys(form).forEach(key => data.append(key, form[key]));
-        mediaFiles.forEach(file => data.append('media', file));
+        mediaFiles.forEach(file => data.append('photos', file));
 
         try {
             const response = await fetch(`${API_URL}/api/tickets`, {
@@ -218,15 +303,11 @@ const NewTicketForm = ({ user, onSuccess, isMobile }) => {
                 alert(err.message || 'Error al crear ticket');
             }
         } catch (err) { alert('Error de conexión'); }
-        finally { setLoading(true); }
+        finally { setLoading(false); }
     };
 
     return (
         <div className="fade-in-up">
-            <div className="mb-8">
-                <h1 className="font-serif text-3xl md:text-4xl font-bold text-primary dark:text-white mb-2">Registrar Nuevo Caso</h1>
-                <p className="text-gray-500 dark:text-gray-400 text-sm">Ingresa los detalles del paciente para generar un número de radicado PQR.</p>
-            </div>
 
             <form onSubmit={handleSubmit} className="glass-panel rounded-2xl p-6 md:p-10 shadow-xl">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
@@ -349,9 +430,10 @@ const NewTicketForm = ({ user, onSuccess, isMobile }) => {
     );
 };
 
-const TicketList = ({ tickets, user, users, onUpdate, isMobile }) => {
+const TicketList = ({ tickets, user, users, onUpdate, isMobile, showArchived, setShowArchived }) => {
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [reassigning, setReassigning] = useState(null);
+    const [openMenu, setOpenMenu] = useState(null);
 
     const handleReassign = async (ticketId, userId) => {
         try {
@@ -367,15 +449,65 @@ const TicketList = ({ tickets, user, users, onUpdate, isMobile }) => {
         } catch (err) { alert('Error al reasignar'); }
     };
 
+    const handleArchiveTicket = async (ticketId, archivedState) => {
+        try {
+            const response = await fetch(`${API_URL}/api/tickets/${ticketId}/archive`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user.token}` },
+                body: JSON.stringify({ archived: archivedState })
+            });
+
+            if (response.ok) {
+                setOpenMenu(null);
+                onUpdate();
+            }
+        } catch (err) { alert('Error al archivar'); }
+    };
+
+    const handleDeleteTicket = async (ticketId) => {
+        if (!window.confirm('¿Estás seguro de que deseas eliminar este ticket permanentemente? Esta acción borrará también todas las fotos y seguimientos asociados.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/api/tickets/${ticketId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${user.token}` }
+            });
+
+            if (response.ok) {
+                alert('Ticket eliminado con éxito');
+                onUpdate();
+            } else {
+                const error = await response.json();
+                alert(error.message || 'Error al eliminar');
+            }
+        } catch (err) {
+            alert('Error al conectar con el servidor');
+        }
+    };
+
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center mb-6">
-                <h3 className="font-serif text-2xl font-bold text-primary dark:text-white">Gestión de Casos <span className="font-montserrat">({tickets.length})</span></h3>
-            </div>
+            {user.role === 'SUPERADMIN' && (
+                <div className="flex justify-end gap-2 mb-4">
+                    <button
+                        onClick={() => setShowArchived(!showArchived)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs transition-all border ${showArchived
+                            ? 'bg-accent text-primary border-accent'
+                            : 'bg-white/50 dark:bg-black/20 text-gray-500 border-gray-200 dark:border-white/10 hover:bg-white dark:hover:bg-white/10'}`}
+                    >
+                        <span className="material-symbols-outlined text-sm">{showArchived ? 'folder_open' : 'archive'}</span>
+                        {showArchived ? 'Ver Activos' : 'Ver Archivados'}
+                    </button>
+                </div>
+            )}
 
             <div className="grid gap-4">
                 {tickets.map((t, idx) => {
-                    const isOwner = t.assignedToId === user.id || user.role === 'SUPERADMIN';
+                    // Check if Superadmin or owner to enable "Gestionar"
+                    const isSuperAdmin = user.role === 'SUPERADMIN' || user.role === 'ADMIN';
+                    const isOwner = t.assignedToId === user.id || isSuperAdmin;
                     return (
                         <motion.div
                             key={t.id}
@@ -391,7 +523,7 @@ const TicketList = ({ tickets, user, users, onUpdate, isMobile }) => {
                                         title="Click para compartir en WhatsApp"
                                         onClick={() => {
                                             const ticketIdClean = t.id.replace(/-/g, '');
-                                            const message = `Hola ${t.patientName}, su número de caso es el ${ticketIdClean}. Puede consultar el estado en: pqr.nariionline.cloud`;
+                                            const message = `Hola ${t.patientName}, su número de caso es el ${ticketIdClean}. Puede consultar el estado en: criisapp.nariionline.cloud`;
                                             window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
                                         }}
                                     >
@@ -424,36 +556,48 @@ const TicketList = ({ tickets, user, users, onUpdate, isMobile }) => {
                                     {t.status}
                                 </span>
 
-                                {user.role === 'SUPERADMIN' && (
+                                {isSuperAdmin && (
                                     <div className="relative">
                                         <button
-                                            onClick={() => setReassigning(reassigning === t.id ? null : t.id)}
-                                            className="p-2 text-gray-400 hover:text-accent transition-colors"
-                                            title="Reasignar"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setOpenMenu(openMenu === t.id ? null : t.id);
+                                            }}
+                                            className={`p-2 rounded-lg transition-all ${openMenu === t.id ? 'bg-accent text-primary' : 'text-gray-400 hover:text-accent hover:bg-accent/10'}`}
+                                            title="Opciones"
                                         >
-                                            <span className="material-symbols-outlined">person_pin_circle</span>
+                                            <span className="material-symbols-outlined">more_vert</span>
                                         </button>
                                         <AnimatePresence>
-                                            {reassigning === t.id && (
+                                            {openMenu === t.id && (
                                                 <motion.div
-                                                    initial={{ opacity: 0, scale: 0.95 }}
-                                                    animate={{ opacity: 1, scale: 1 }}
-                                                    exit={{ opacity: 0, scale: 0.95 }}
-                                                    className="absolute bottom-full right-0 mb-2 w-56 glass-panel p-3 rounded-xl border border-white/10 shadow-2xl z-20"
+                                                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                    exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                                                    className="absolute bottom-full right-0 mb-2 w-48 glass-panel p-2 rounded-xl border border-white/10 shadow-2xl z-20 flex flex-col gap-1"
                                                 >
-                                                    <p className="text-[10px] uppercase font-bold text-gray-400 mb-2 px-1">Asignar a:</p>
-                                                    <div className="space-y-1 max-h-48 overflow-y-auto no-scrollbar">
-                                                        {users.map(u => (
-                                                            <button
-                                                                key={u.id}
-                                                                onClick={() => handleReassign(t.id, u.id)}
-                                                                className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-accent/10 hover:text-accent transition-all flex items-center gap-2"
-                                                            >
-                                                                <span className="material-symbols-outlined text-sm">person</span>
-                                                                {u.username}
-                                                            </button>
-                                                        ))}
-                                                    </div>
+                                                    <button
+                                                        onClick={() => { setReassigning(t.id); setOpenMenu(null); }}
+                                                        className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-accent/10 hover:text-accent transition-all flex items-center gap-2"
+                                                    >
+                                                        <span className="material-symbols-outlined text-sm">person_pin_circle</span>
+                                                        Reasignar
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleArchiveTicket(t.id, !t.isArchived)}
+                                                        className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-accent/10 hover:text-accent transition-all flex items-center gap-2"
+                                                    >
+                                                        <span className="material-symbols-outlined text-sm">{t.isArchived ? 'unarchive' : 'archive'}</span>
+                                                        {t.isArchived ? 'Restaurar' : 'Archivar'}
+                                                    </button>
+                                                    <div className="h-px bg-white/5 my-1" />
+                                                    <button
+                                                        onClick={() => { handleDeleteTicket(t.id); setOpenMenu(null); }}
+                                                        className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-red-500/10 text-red-500 transition-all flex items-center gap-2"
+                                                    >
+                                                        <span className="material-symbols-outlined text-sm">delete_forever</span>
+                                                        Eliminar
+                                                    </button>
                                                 </motion.div>
                                             )}
                                         </AnimatePresence>
@@ -461,12 +605,14 @@ const TicketList = ({ tickets, user, users, onUpdate, isMobile }) => {
                                 )}
 
                                 {isOwner ? (
-                                    <button
-                                        onClick={() => setSelectedTicket(t)}
-                                        className="px-6 py-2 bg-primary dark:bg-white text-white dark:text-primary rounded-xl text-sm font-bold shadow-lg hover:shadow-primary/20 dark:hover:shadow-white/10 transition-all hover:scale-105"
-                                    >
-                                        Gestionar
-                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => setSelectedTicket(t)}
+                                            className="px-6 py-2 bg-primary dark:bg-white text-white dark:text-primary rounded-xl text-sm font-bold shadow-lg hover:shadow-primary/20 dark:hover:shadow-white/10 transition-all hover:scale-105"
+                                        >
+                                            Gestionar
+                                        </button>
+                                    </div>
                                 ) : (
                                     <button disabled className="px-6 py-2 border border-gray-200 dark:border-white/10 text-gray-400 rounded-xl text-sm font-bold opacity-50 cursor-not-allowed">
                                         Lectura
@@ -505,7 +651,13 @@ const TicketList = ({ tickets, user, users, onUpdate, isMobile }) => {
                                 </button>
                             </div>
                             <div className="p-8 max-h-[80vh] overflow-y-auto no-scrollbar">
-                                <FollowUpForm ticket={selectedTicket} user={user} onDone={() => { setSelectedTicket(null); onUpdate(); }} />
+                                <FollowUpForm
+                                    ticket={selectedTicket}
+                                    user={user}
+                                    onDone={() => { setSelectedTicket(null); onUpdate(); }}
+                                    onDelete={() => { handleDeleteTicket(selectedTicket.id); setSelectedTicket(null); }}
+                                    onArchive={(state) => { handleArchiveTicket(selectedTicket.id, state); setSelectedTicket(null); }}
+                                />
                             </div>
                         </motion.div>
                     </motion.div>
@@ -516,7 +668,8 @@ const TicketList = ({ tickets, user, users, onUpdate, isMobile }) => {
 };
 
 
-const FollowUpForm = ({ ticket, user, onDone }) => {
+const FollowUpForm = ({ ticket, user, onDone, onDelete, onArchive }) => {
+    const isSuperAdmin = user.role === 'SUPERADMIN' || user.role === 'ADMIN';
     const [form, setForm] = useState({ content: '', diagnosis: '', protocol: '', bonusInfo: '', status: ticket.status });
     const [submitting, setSubmitting] = useState(false);
 
@@ -582,13 +735,36 @@ const FollowUpForm = ({ ticket, user, onDone }) => {
                 </div>
             </div>
 
-            <button
-                type="submit"
-                disabled={submitting}
-                className="w-full py-4 bg-primary dark:bg-accent text-white dark:text-primary rounded-xl font-bold font-serif shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-50"
-            >
-                {submitting ? 'Guardando...' : 'Guardar Gestión'}
-            </button>
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                <button
+                    type="submit"
+                    disabled={submitting}
+                    className="flex-1 py-4 bg-primary dark:bg-accent text-white dark:text-primary rounded-xl font-bold font-serif shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-50"
+                >
+                    {submitting ? 'Guardando...' : 'Guardar Gestión'}
+                </button>
+
+                {isSuperAdmin && (
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            onClick={() => onArchive(!ticket.isArchived)}
+                            className="px-4 py-4 bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-300 rounded-xl font-bold hover:bg-accent hover:text-primary transition-all flex items-center justify-center gap-2 shadow-sm"
+                            title={ticket.isArchived ? "Restaurar Ticket" : "Archivar Ticket"}
+                        >
+                            <span className="material-symbols-outlined">{ticket.isArchived ? 'unarchive' : 'archive'}</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onDelete}
+                            className="px-6 py-4 bg-red-600/10 text-red-600 rounded-xl font-bold hover:bg-red-600 hover:text-white transition-all flex items-center justify-center gap-2 border border-red-600/20"
+                        >
+                            <span className="material-symbols-outlined">delete_forever</span>
+                            <span className="hidden sm:inline">Eliminar</span>
+                        </button>
+                    </div>
+                )}
+            </div>
         </form>
     );
 };
@@ -651,10 +827,6 @@ const ReportsView = ({ tickets, user, users, isMobile }) => {
 
     return (
         <div className="space-y-8 animate-fade-in">
-            <div className="mb-6">
-                <h1 className="font-montserrat text-3xl font-bold text-primary dark:text-white mb-2">Informes de Gestión</h1>
-                <p className="text-gray-500 text-sm">Genera reportes detallados y descarga en formato PDF.</p>
-            </div>
 
             <div className="glass-panel p-6 md:p-8 rounded-2xl border border-gray-100 dark:border-white/5 space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
@@ -728,11 +900,7 @@ const UserManagement = ({ user, users, onUpdate, isMobile }) => {
 
     return (
         <div className="space-y-8 animate-fade-in">
-            <div className="flex justify-between items-center mb-8">
-                <div>
-                    <h1 className="font-serif text-3xl font-bold text-primary dark:text-white mb-2">Gestión de Usuarios</h1>
-                    <p className="text-gray-500 text-sm">Administra los accesos y roles de los gestores del sistema.</p>
-                </div>
+            <div className="flex justify-end mb-8">
                 <button
                     onClick={() => setIsCreating(true)}
                     className="px-6 py-3 bg-primary dark:bg-white text-white dark:text-primary rounded-xl font-bold font-serif shadow-lg hover:shadow-primary/20 hover:scale-105 transition-all flex items-center gap-2"
@@ -996,10 +1164,6 @@ const StatsView = ({ stats, users, user, onRefresh, isMobile }) => {
 
     return (
         <div className="space-y-8 animate-fade-in">
-            <div className="mb-6">
-                <h1 className="font-montserrat text-3xl font-bold text-primary dark:text-white mb-2">Análisis de Gestión</h1>
-                <p className="text-gray-500 text-sm">Monitoreo en tiempo real del rendimiento y distribución de PQRs.</p>
-            </div>
 
             {/* Filtros */}
             <div className="glass-panel p-6 rounded-2xl border border-gray-100 dark:border-white/5 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
@@ -1143,10 +1307,6 @@ const ProfileView = ({ user, onUpdate, isMobile }) => {
 
     return (
         <div className="space-y-8 animate-fade-in">
-            <div className="mb-6">
-                <h1 className="font-serif text-3xl font-bold text-primary dark:text-white mb-2">Mi Perfil</h1>
-                <p className="text-gray-500 text-sm">Gestiona tu información personal y credenciales de acceso.</p>
-            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Columna Izquierda: Avatar y Resumen */}
@@ -1249,6 +1409,8 @@ const BrandManagement = ({ user }) => {
     const [faviconFile, setFaviconFile] = useState(null);
     const [horizontalLogoUrl, setHorizontalLogoUrl] = useState('');
     const [horizontalLogoFile, setHorizontalLogoFile] = useState(null);
+    const [panelLogoUrl, setPanelLogoUrl] = useState('');
+    const [panelLogoFile, setPanelLogoFile] = useState(null);
     const [loading, setLoading] = useState(false);
 
     const handleUpdateLogo = async (e) => {
@@ -1260,10 +1422,12 @@ const BrandManagement = ({ user }) => {
             if (logoFile) formData.append('logo', logoFile);
             if (faviconFile) formData.append('favicon', faviconFile);
             if (horizontalLogoFile) formData.append('horizontalLogo', horizontalLogoFile);
+            if (panelLogoFile) formData.append('panelLogo', panelLogoFile);
         } else {
             if (logoUrl) formData.append('logoUrl', logoUrl);
             if (faviconUrl) formData.append('faviconUrl', faviconUrl);
             if (horizontalLogoUrl) formData.append('horizontalLogoUrl', horizontalLogoUrl);
+            if (panelLogoUrl) formData.append('panelLogoUrl', panelLogoUrl);
         }
 
         try {
@@ -1278,6 +1442,8 @@ const BrandManagement = ({ user }) => {
                 if (data.logoUrl) setLogoUrl(data.logoUrl);
                 if (data.faviconUrl) setFaviconUrl(data.faviconUrl);
                 if (data.horizontalLogoUrl) setHorizontalLogoUrl(data.horizontalLogoUrl);
+                if (data.panelLogoUrl) setPanelLogoUrl(data.panelLogoUrl);
+                window.location.reload(); // Quick way to sync across components
             } else {
                 alert(data.message || 'Error al actualizar logo');
             }
@@ -1290,11 +1456,7 @@ const BrandManagement = ({ user }) => {
     };
 
     return (
-        <div className="mt-12 space-y-6">
-            <div className="flex items-center gap-3 mb-4">
-                <span className="material-symbols-outlined text-accent">palette</span>
-                <h3 className="font-montserrat text-2xl font-bold dark:text-white">Identidad Visual</h3>
-            </div>
+        <div className="mt-4 space-y-6">
 
             <div className="glass-panel p-8 rounded-3xl border border-gray-100 dark:border-white/5 space-y-8">
                 <div className="flex gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-xl w-fit">
@@ -1344,6 +1506,15 @@ const BrandManagement = ({ user }) => {
                                     onChange={e => setHorizontalLogoUrl(e.target.value)}
                                 />
                             </div>
+                            <div className="space-y-2 md:col-span-2">
+                                <label className="text-xs font-bold text-primary dark:text-gray-300 ml-1 uppercase">URL del Logo Panel (Cuadrado)</label>
+                                <input
+                                    className="input-dashboard w-full px-4 py-3 rounded-xl bg-white/50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white"
+                                    placeholder="https://ejemplo.com/panel-logo.png"
+                                    value={panelLogoUrl}
+                                    onChange={e => setPanelLogoUrl(e.target.value)}
+                                />
+                            </div>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1375,6 +1546,16 @@ const BrandManagement = ({ user }) => {
                                         {horizontalLogoFile ? horizontalLogoFile.name : 'Cargar Logo Horizontal...'}
                                     </span>
                                     <input type="file" className="hidden" accept="image/*" onChange={e => setHorizontalLogoFile(e.target.files[0])} />
+                                </label>
+                            </div>
+                            <div className="space-y-2 md:col-span-2">
+                                <label className="text-xs font-bold text-primary dark:text-gray-300 ml-1 uppercase">Archivo del Logo Panel (Cuadrado)</label>
+                                <label className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 dark:bg-black/20 border border-dashed border-gray-300 dark:border-white/20 cursor-pointer hover:bg-white dark:hover:bg-white/5 transition-all group">
+                                    <span className="material-symbols-outlined text-gray-400 group-hover:text-accent">grid_view</span>
+                                    <span className="text-sm text-gray-500 group-hover:text-primary dark:text-gray-400 truncate">
+                                        {panelLogoFile ? panelLogoFile.name : 'Cargar Logo Panel...'}
+                                    </span>
+                                    <input type="file" className="hidden" accept="image/*" onChange={e => setPanelLogoFile(e.target.files[0])} />
                                 </label>
                             </div>
                         </div>

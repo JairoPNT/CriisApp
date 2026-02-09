@@ -36,6 +36,7 @@ model Ticket {
   revenue        Float?
   assignedToId   Int?
   assignedTo     User?       @relation("AssignedTickets", fields: [assignedToId], references: [id])
+  isArchived     Boolean     @default(false)
 }
 
 model SystemSetting {

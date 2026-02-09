@@ -6,7 +6,9 @@ const {
     getTicketByPublicId,
     addFollowUp,
     getStats,
-    reassignTicket
+    reassignTicket,
+    archiveTicket,
+    deleteTicket
 } = require('../controllers/ticketController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -21,5 +23,7 @@ router.get('/', protect, getTickets);
 router.post('/:id/follow-up', protect, addFollowUp);
 router.get('/stats', protect, getStats);
 router.put('/:id/reassign', protect, reassignTicket);
+router.put('/:id/archive', protect, archiveTicket);
+router.delete('/:id', protect, deleteTicket);
 
 module.exports = router;

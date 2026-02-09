@@ -179,7 +179,7 @@ const updateSettings = async (req, res) => {
     }
 
     try {
-        let { logoUrl, faviconUrl, horizontalLogoUrl } = req.body;
+        let { logoUrl, faviconUrl, horizontalLogoUrl, panelLogoUrl } = req.body;
 
         // Process files if uploaded via upload.fields
         if (req.files) {
@@ -199,6 +199,9 @@ const updateSettings = async (req, res) => {
             }
             if (req.files['horizontalLogo'] && req.files['horizontalLogo'][0]) {
                 horizontalLogoUrl = getFullUrl(req.files['horizontalLogo'][0].path);
+            }
+            if (req.files['panelLogo'] && req.files['panelLogo'][0]) {
+                panelLogoUrl = getFullUrl(req.files['panelLogo'][0].path);
             }
         }
 
@@ -224,6 +227,13 @@ const updateSettings = async (req, res) => {
                 create: { key: 'horizontalLogoUrl', value: horizontalLogoUrl }
             }));
         }
+        if (panelLogoUrl) {
+            updates.push(prisma.systemSetting.upsert({
+                where: { key: 'panelLogoUrl' },
+                update: { value: panelLogoUrl },
+                create: { key: 'panelLogoUrl', value: panelLogoUrl }
+            }));
+        }
 
         if (updates.length > 0) {
             await Promise.all(updates);
@@ -233,7 +243,8 @@ const updateSettings = async (req, res) => {
             message: 'Configuración actualizada con éxito',
             logoUrl,
             faviconUrl,
-            horizontalLogoUrl
+            horizontalLogoUrl,
+            panelLogoUrl
         });
     } catch (error) {
         console.error('Error en updateSettings:', error);

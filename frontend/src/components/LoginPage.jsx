@@ -38,7 +38,7 @@ const LoginPage = ({ onLogin, onBack, logo }) => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 font-sans text-primary dark:text-gray-200 overflow-hidden relative selection:bg-accent/30 selection:text-white transition-colors duration-500">
+        <div className="min-h-screen flex items-center justify-center p-4 font-sans text-primary dark:text-gray-200 overflow-x-hidden relative selection:bg-accent/30 selection:text-white transition-colors duration-500">
 
             {/* Elementos Decorativos de Fondo */}
             <div className="fixed top-[-10%] left-[-10%] w-96 h-96 bg-primary/5 dark:bg-primary/20 rounded-full blur-3xl pointer-events-none"></div>

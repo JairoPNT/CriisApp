@@ -23,6 +23,19 @@
 /* Habilitar modo oscuro por clase en Tailwind 4 */
 @variant dark (&:where(.dark, .dark *));
 
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  position: relative;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 :root {
   --primary-earth: #1a2e26;
   --secondary-earth: #6B8E23;

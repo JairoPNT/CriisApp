@@ -1,6 +1,8 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 const { triggerN8nWebhook } = require('../utils/n8n');
 
 // Generate unique ticket ID (e.g., PQR1A2B3)
@@ -29,6 +31,7 @@ const createTicket = async (req, res) => {
                 email,
                 description,
                 status: 'INICIAL',
+                isArchived: false,
                 revenue: 70000,
                 assignedToId: req.user.id, // Assigned to the creator
                 media: {
@@ -50,17 +53,28 @@ const createTicket = async (req, res) => {
 
 const getTickets = async (req, res) => {
     try {
-        const query = {
-            orderBy: { createdAt: 'desc' },
-            include: { followUps: true, media: true, assignedTo: true },
-        };
+        const { archived } = req.query;
+        const where = {};
+
+        // Default to not archived if not specified
+        if (archived === 'true') {
+            where.isArchived = true;
+        } else if (archived === 'false') {
+            where.isArchived = false;
+        } else {
+            where.isArchived = false; // Default behavior
+        }
 
         // If not SUPERADMIN, only show assigned tickets
         if (req.user.role !== 'SUPERADMIN') {
-            query.where = { assignedToId: req.user.id };
+            where.assignedToId = req.user.id;
         }
 
-        const tickets = await prisma.ticket.findMany(query);
+        const tickets = await prisma.ticket.findMany({
+            where,
+            orderBy: { createdAt: 'desc' },
+            include: { followUps: true, media: true, assignedTo: true },
+        });
         res.json(tickets);
     } catch (error) {
         res.status(500).json({ message: 'Error al obtener tickets', error: error.message });
@@ -147,10 +161,35 @@ const addFollowUp = async (req, res) => {
         });
 
         // Update ticket status
+        const updatedStatus = status || 'EN_SEGUIMIENTO';
         const updatedTicket = await prisma.ticket.update({
             where: { id },
-            data: { status: status || 'EN_SEGUIMIENTO' },
+            data: { status: updatedStatus },
         });
+
+        // IF FINALIZADO: Delete associated media files and records
+        if (updatedStatus === 'FINALIZADO') {
+            try {
+                const mediaToDelete = await prisma.media.findMany({
+                    where: { ticketId: id }
+                });
+
+                for (const item of mediaToDelete) {
+                    const filePath = path.resolve(item.url);
+                    if (fs.existsSync(filePath)) {
+                        fs.unlinkSync(filePath);
+                        console.log(`Eliminado archivo: ${filePath}`);
+                    }
+                }
+
+                await prisma.media.deleteMany({
+                    where: { ticketId: id }
+                });
+                console.log(`Registros de media eliminados para el ticket: ${id}`);
+            } catch (mediaError) {
+                console.error('Error al limpiar media del ticket cerrado:', mediaError);
+            }
+        }
 
         triggerN8nWebhook({ ...followUp, ticket: updatedTicket }, 'FOLLOW_UP');
 
@@ -189,7 +228,7 @@ const getStats = async (req, res) => {
         });
 
         const cityStats = await prisma.ticket.groupBy({
-            where,
+            where: { ...where, isArchived: false }, // Only count active for main stats? 
             by: ['city'],
             _count: { _all: true }
         });
@@ -205,11 +244,73 @@ const getStats = async (req, res) => {
     }
 };
 
+const archiveTicket = async (req, res) => {
+    const { id } = req.params;
+    const { archived } = req.body; // true to archive, false to restore
+
+    try {
+        if (req.user.role !== 'SUPERADMIN') {
+            return res.status(403).json({ message: 'Solo el administrador puede archivar tickets' });
+        }
+
+        const ticket = await prisma.ticket.update({
+            where: { id },
+            data: { isArchived: archived === true },
+        });
+
+        res.json({ message: archived ? 'Ticket archivado correctamente' : 'Ticket restaurado correctamente', ticket });
+    } catch (error) {
+        res.status(500).json({ message: 'Error al cambiar estado de archivo', error: error.message });
+    }
+};
+
+const deleteTicket = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        if (req.user.role !== 'SUPERADMIN') {
+            return res.status(403).json({ message: 'Solo el administrador puede eliminar tickets' });
+        }
+
+        // 1. Get media to delete files
+        const mediaToDelete = await prisma.media.findMany({
+            where: { ticketId: id }
+        });
+
+        // 2. Delete physical files
+        for (const item of mediaToDelete) {
+            const filePath = path.resolve(item.url);
+            if (fs.existsSync(filePath)) {
+                try {
+                    fs.unlinkSync(filePath);
+                    console.log(`Eliminado archivo: ${filePath}`);
+                } catch (err) {
+                    console.error(`Error al borrar archivo físico: ${filePath}`, err);
+                }
+            }
+        }
+
+        // 3. Delete from database (Relations)
+        await prisma.media.deleteMany({ where: { ticketId: id } });
+        await prisma.followUp.deleteMany({ where: { ticketId: id } });
+
+        // 4. Delete the Ticket
+        await prisma.ticket.delete({ where: { id } });
+
+        res.json({ message: 'Ticket y archivos eliminados correctamente' });
+    } catch (error) {
+        console.error('Delete Ticket Error:', error);
+        res.status(500).json({ message: 'Error al eliminar el ticket', error: error.message });
+    }
+};
+
 module.exports = {
     createTicket,
     getTickets,
     getTicketByPublicId,
     addFollowUp,
     getStats,
-    reassignTicket
+    reassignTicket,
+    archiveTicket,
+    deleteTicket
 };

@@ -23,7 +23,8 @@ router.get('/settings', getSettings);
 router.put('/settings', protect, upload.fields([
     { name: 'logo', maxCount: 1 },
     { name: 'favicon', maxCount: 1 },
-    { name: 'horizontalLogo', maxCount: 1 }
+    { name: 'horizontalLogo', maxCount: 1 },
+    { name: 'panelLogo', maxCount: 1 }
 ]), updateSettings);
 
 module.exports = router;
