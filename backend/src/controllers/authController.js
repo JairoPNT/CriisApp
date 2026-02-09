@@ -91,7 +91,11 @@ const getUsers = async (req, res) => {
             return res.status(403).json({ message: 'Acceso denegado' });
         }
         const users = await prisma.user.findMany({
-            select: { id: true, username: true, name: true, role: true, email: true, phone: true, avatar: true }
+            select: {
+                id: true, username: true, name: true, role: true, email: true, phone: true, avatar: true, address: true,
+                experience: true, achievements: true, training: true, titles: true, specialties: true,
+                businessName: true, nit: true, contactPerson: true
+            }
         });
         res.json(users);
     } catch (error) {
@@ -103,7 +107,11 @@ const updateUser = async (req, res) => {
     const { id } = req.params;
     try {
         const body = req.body || {};
-        let { username, name, email, phone, avatar, role, password, newPassword } = body;
+        let {
+            username, name, email, phone, avatar, role, password, newPassword,
+            address, experience, achievements, training, titles, specialties,
+            businessName, nit, contactPerson
+        } = body;
         const passToHash = password || newPassword;
 
         if (req.user.role !== 'SUPERADMIN') {
@@ -120,16 +128,24 @@ const updateUser = async (req, res) => {
         if (email) updateData.email = email;
         if (phone) updateData.phone = phone;
         if (avatar) updateData.avatar = avatar;
-        if (role) updateData.role = role;
-
-        if (passToHash) {
-            updateData.password = await hashPassword(passToHash);
-        }
+        if (address) updateData.address = address;
+        if (experience) updateData.experience = experience;
+        if (achievements) updateData.achievements = achievements;
+        if (training) updateData.training = training;
+        if (titles) updateData.titles = titles;
+        if (specialties) updateData.specialties = specialties;
+        if (businessName) updateData.businessName = businessName;
+        if (nit) updateData.nit = nit;
+        if (contactPerson) updateData.contactPerson = contactPerson;
 
         const updatedUser = await prisma.user.update({
             where: { id: parseInt(id) },
             data: updateData,
-            select: { id: true, username: true, name: true, role: true, email: true, phone: true, avatar: true }
+            select: {
+                id: true, username: true, name: true, role: true, email: true, phone: true, avatar: true, address: true,
+                experience: true, achievements: true, training: true, titles: true, specialties: true,
+                businessName: true, nit: true, contactPerson: true
+            }
         });
 
         res.json(updatedUser);
@@ -257,7 +273,11 @@ const registerUser = async (req, res) => {
         return res.status(403).json({ message: 'Solo el administrador puede crear nuevos usuarios' });
     }
 
-    const { username, name, password, role, phone, email } = req.body;
+    const {
+        username, name, password, role, phone, email, address,
+        experience, achievements, training, titles, specialties,
+        businessName, nit, contactPerson
+    } = req.body;
     let avatar = req.body.avatar;
 
     if (!username || !password) {
@@ -287,7 +307,16 @@ const registerUser = async (req, res) => {
                 avatar,
                 password: hashedPassword,
                 role: role || 'GESTOR',
-                phone
+                phone,
+                address,
+                experience,
+                achievements,
+                training,
+                titles,
+                specialties,
+                businessName,
+                nit,
+                contactPerson
             }
         });
 

@@ -16,6 +16,20 @@ model User {
   role      String   // "SUPERADMIN", "GESTOR", "ENTIDAD"
   phone     String?
   avatar    String?  // URL or path to image
+  address   String?
+  
+  // Gestor / CV Fields
+  experience   String? @db.Text
+  achievements String? @db.Text
+  training     String? @db.Text
+  titles       String? @db.Text
+  specialties  String? @db.Text // Example for "etc."
+
+  // Entidad / Brand Fields
+  businessName  String?
+  nit          String?
+  contactPerson String?
+
   authCode  String?  @unique
   createdAt DateTime @default(now())
   tickets        Ticket[] @relation("AssignedTickets")

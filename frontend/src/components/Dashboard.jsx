@@ -1091,6 +1091,7 @@ const ReportsView = ({ tickets, user, users, isMobile }) => {
 
 const UserManagement = ({ user, users, onUpdate, isMobile }) => {
     const [editingUser, setEditingUser] = useState(null);
+    const [viewingProfile, setViewingProfile] = useState(null);
     const [isCreating, setIsCreating] = useState(false);
     const [loading, setLoading] = useState(false);
 
@@ -1129,7 +1130,8 @@ const UserManagement = ({ user, users, onUpdate, isMobile }) => {
                         key={u.id}
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="glass-panel p-6 rounded-2xl border border-gray-100 dark:border-white/5 flex items-center gap-4 group hover:border-accent/30 transition-all"
+                        onClick={() => setViewingProfile(u)}
+                        className="glass-panel p-6 rounded-2xl border border-gray-100 dark:border-white/5 flex items-center gap-4 group hover:border-accent/30 transition-all cursor-pointer"
                     >
                         <div className="shrink-0">
                             {u.avatar ? (
@@ -1148,7 +1150,7 @@ const UserManagement = ({ user, users, onUpdate, isMobile }) => {
                             </span>
                         </div>
                         <button
-                            onClick={() => setEditingUser(u)}
+                            onClick={(e) => { e.stopPropagation(); setEditingUser(u); }}
                             className="p-2 text-gray-400 hover:text-accent transition-colors"
                         >
                             <span className="material-symbols-outlined">edit</span>
@@ -1165,7 +1167,7 @@ const UserManagement = ({ user, users, onUpdate, isMobile }) => {
                             initial={{ scale: 0.9, y: 20 }}
                             animate={{ scale: 1, y: 0 }}
                             exit={{ scale: 0.9, y: 20 }}
-                            className="bg-white dark:bg-sidebar w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden"
+                            className="bg-white dark:bg-sidebar w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden"
                         >
                             <div className="p-6 border-b border-gray-100 dark:border-white/5 flex justify-between items-center">
                                 <h4 className="font-serif text-xl font-bold dark:text-white">Editar Usuario</h4>
@@ -1173,7 +1175,7 @@ const UserManagement = ({ user, users, onUpdate, isMobile }) => {
                                     <span className="material-symbols-outlined">close</span>
                                 </button>
                             </div>
-                            <div className="p-8">
+                            <div className="p-8 max-h-[80vh] overflow-y-auto no-scrollbar">
                                 <form onSubmit={(e) => {
                                     e.preventDefault();
                                     const data = new FormData();
@@ -1207,6 +1209,11 @@ const UserManagement = ({ user, users, onUpdate, isMobile }) => {
                                             <input className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white" value={editingUser.username} onChange={e => setEditingUser({ ...editingUser, username: e.target.value })} />
                                         </div>
                                         <div className="space-y-2">
+                                            <label className="text-sm font-bold text-primary dark:text-gray-300 ml-1">Dirección / Sede</label>
+                                            <input className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white" value={editingUser.address || ''} onChange={e => setEditingUser({ ...editingUser, address: e.target.value })} />
+                                        </div>
+
+                                        <div className="space-y-2">
                                             <label className="text-sm font-bold text-primary dark:text-gray-300 ml-1">Rol</label>
                                             <select className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white" value={editingUser.role} onChange={e => setEditingUser({ ...editingUser, role: e.target.value })}>
                                                 <option value="GESTOR">Gestor</option>
@@ -1214,15 +1221,33 @@ const UserManagement = ({ user, users, onUpdate, isMobile }) => {
                                                 <option value="ENTIDAD">Entidad / Empresa</option>
                                             </select>
                                         </div>
+
+                                        {editingUser.role === 'GESTOR' && (
+                                            <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-white/5 animate-fade-in">
+                                                <h6 className="text-[10px] font-bold text-accent uppercase tracking-[0.2em]">Información Profesional (CV)</h6>
+                                                <EditProfileArea label="Experiencia" value={editingUser.experience} onChange={v => setEditingUser({ ...editingUser, experience: v })} />
+                                                <EditProfileArea label="Logros Profesionales" value={editingUser.achievements} onChange={v => setEditingUser({ ...editingUser, achievements: v })} />
+                                                <EditProfileArea label="Titulación / Especialidad" value={editingUser.titles} onChange={v => setEditingUser({ ...editingUser, titles: v })} />
+                                                <EditProfileArea label="Simposios / Capacitaciones" value={editingUser.training} onChange={v => setEditingUser({ ...editingUser, training: v })} />
+                                            </div>
+                                        )}
+
                                         {editingUser.role === 'ENTIDAD' && (
-                                            <div className="space-y-2 animate-fade-in">
-                                                <label className="text-sm font-bold text-accent ml-1 uppercase tracking-widest">Código de Autorización</label>
-                                                <input
-                                                    className="input-dashboard w-full px-4 py-3 rounded-xl bg-accent/5 border border-accent/20 outline-none text-sm text-primary dark:text-white font-mono tracking-widest"
-                                                    value={editingUser.authCode || ''}
-                                                    onChange={e => setEditingUser({ ...editingUser, authCode: e.target.value.toUpperCase() })}
-                                                    placeholder="Ej: SKN0001"
-                                                />
+                                            <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-white/5 animate-fade-in">
+                                                <h6 className="text-[10px] font-bold text-accent uppercase tracking-[0.2em]">Información Corporativa</h6>
+                                                <EditProfileInput label="Razón Social" value={editingUser.businessName} onChange={v => setEditingUser({ ...editingUser, businessName: v })} />
+                                                <EditProfileInput label="NIT / Registro" value={editingUser.nit} onChange={v => setEditingUser({ ...editingUser, nit: v })} />
+                                                <EditProfileInput label="Responsable de Contacto" value={editingUser.contactPerson} onChange={v => setEditingUser({ ...editingUser, contactPerson: v })} />
+
+                                                <div className="space-y-2">
+                                                    <label className="text-sm font-bold text-accent ml-1 uppercase tracking-widest">Código de Autorización</label>
+                                                    <input
+                                                        className="input-dashboard w-full px-4 py-3 rounded-xl bg-accent/5 border border-accent/20 outline-none text-sm text-primary dark:text-white font-mono tracking-widest"
+                                                        value={editingUser.authCode || ''}
+                                                        onChange={e => setEditingUser({ ...editingUser, authCode: e.target.value.toUpperCase() })}
+                                                        placeholder="Ej: SKN0001"
+                                                    />
+                                                </div>
                                             </div>
                                         )}
                                     </div>
@@ -1230,6 +1255,104 @@ const UserManagement = ({ user, users, onUpdate, isMobile }) => {
                                         {loading ? 'Guardando...' : 'Guardar Cambios'}
                                     </button>
                                 </form>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Modal Perfil Detalle */}
+            <AnimatePresence>
+                {viewingProfile && (
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex justify-center items-center p-4">
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-white dark:bg-sidebar w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden overflow-y-auto max-h-[90vh] no-scrollbar border border-gray-100 dark:border-white/10"
+                        >
+                            <div className="p-8 border-b border-gray-100 dark:border-white/5 flex justify-between items-center sticky top-0 bg-white/90 dark:bg-sidebar/90 backdrop-blur-md z-10">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-accent/10 rounded-2xl flex items-center justify-center">
+                                        <span className="material-symbols-outlined text-accent text-2xl">visibility</span>
+                                    </div>
+                                    <div>
+                                        <h4 className="font-serif text-2xl font-bold dark:text-white">Perfil de Usuario</h4>
+                                        <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-bold">Resumen de Información</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => setViewingProfile(null)} className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
+                                    <span className="material-symbols-outlined">close</span>
+                                </button>
+                            </div>
+
+                            <div className="p-8 space-y-10">
+                                <div className="flex flex-col md:flex-row items-center gap-8">
+                                    <div className="shrink-0">
+                                        {viewingProfile.avatar ? (
+                                            <img src={viewingProfile.avatar} alt="Avatar" className="w-32 h-32 rounded-full border-4 border-accent object-cover bg-white shadow-xl" />
+                                        ) : (
+                                            <div className="w-32 h-32 rounded-full border-4 border-primary bg-primary flex items-center justify-center text-white text-5xl font-serif">
+                                                {viewingProfile.username.charAt(0).toUpperCase()}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="text-center md:text-left space-y-3">
+                                        <h5 className="text-3xl font-serif font-bold text-primary dark:text-white">{viewingProfile.name || viewingProfile.username}</h5>
+                                        <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-gray-500 font-medium">
+                                            <div className="flex items-center gap-1.5"><span className="material-symbols-outlined text-sm">mail</span>{viewingProfile.email || 'N/A'}</div>
+                                            <div className="flex items-center gap-1.5"><span className="material-symbols-outlined text-sm">call</span>{viewingProfile.phone || 'N/A'}</div>
+                                            <div className="flex items-center gap-1.5"><span className="material-symbols-outlined text-sm">location_on</span>{viewingProfile.address || 'N/A'}</div>
+                                        </div>
+                                        <span className="inline-block px-4 py-1.5 rounded-full bg-accent/20 text-accent text-xs font-bold uppercase tracking-widest border border-accent/20">
+                                            {viewingProfile.role}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-8">
+                                    {viewingProfile.role === 'SUPERADMIN' && (
+                                        <div className="space-y-4 bg-primary/5 p-6 rounded-2xl border border-primary/10">
+                                            <h6 className="text-xs font-bold text-primary dark:text-accent uppercase tracking-widest flex items-center gap-2">
+                                                <span className="material-symbols-outlined text-lg">admin_panel_settings</span>
+                                                Atribuciones de Super Administrador
+                                            </h6>
+                                            <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed italic">
+                                                Como Gestor Principal, tiene control total sobre el sistema, incluyendo la gestión de usuarios,
+                                                configuración global de la marca, supervisión de todos los casos de PQR y capacitaciones corporativas.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {viewingProfile.role === 'GESTOR' && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <ProfileDetailItem icon="work_history" label="Experiencia Profesional" content={viewingProfile.experience} />
+                                            <ProfileDetailItem icon="military_tech" label="Logros y Reconocimientos" content={viewingProfile.achievements} />
+                                            <ProfileDetailItem icon="school" label="Titulaciones" content={viewingProfile.titles} />
+                                            <ProfileDetailItem icon="history_edu" label="Capacitaciones y Simposios" content={viewingProfile.training} />
+                                        </div>
+                                    )}
+
+                                    {viewingProfile.role === 'ENTIDAD' && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <ProfileDetailItem icon="apartment" label="Razón Social" content={viewingProfile.businessName} />
+                                            <ProfileDetailItem icon="id_card" label="NIT" content={viewingProfile.nit} />
+                                            <ProfileDetailItem icon="person_pin" label="Responsable de Contacto" content={viewingProfile.contactPerson} />
+                                            <ProfileDetailItem icon="confirmation_number" label="Código de Autorización" content={viewingProfile.authCode} />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="p-8 bg-gray-50 dark:bg-white/5 border-t border-gray-100 dark:border-white/5 flex justify-end gap-3">
+                                <button
+                                    onClick={() => { setViewingProfile(null); setEditingUser(viewingProfile); }}
+                                    className="px-6 py-3 bg-primary dark:bg-white text-white dark:text-primary rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg"
+                                >
+                                    <span className="material-symbols-outlined text-sm">edit</span>
+                                    Editar Perfil
+                                </button>
+                                <button onClick={() => setViewingProfile(null)} className="px-6 py-3 border border-gray-200 dark:border-white/10 text-gray-500 rounded-xl font-bold text-sm">Cerrar</button>
                             </div>
                         </motion.div>
                     </div>
@@ -1244,15 +1367,23 @@ const UserManagement = ({ user, users, onUpdate, isMobile }) => {
                             initial={{ scale: 0.9, y: 20 }}
                             animate={{ scale: 1, y: 0 }}
                             exit={{ scale: 0.9, y: 20 }}
-                            className="bg-white dark:bg-sidebar w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden"
+                            className="bg-white dark:bg-sidebar w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden"
                         >
-                            <div className="p-6 border-b border-gray-100 dark:border-white/5 flex justify-between items-center">
-                                <h4 className="font-serif text-xl font-bold dark:text-white">Nuevo Gestor</h4>
+                            <div className="p-8 border-b border-gray-100 dark:border-white/5 flex justify-between items-center">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-accent/10 rounded-2xl flex items-center justify-center">
+                                        <span className="material-symbols-outlined text-accent text-2xl">person_add</span>
+                                    </div>
+                                    <div>
+                                        <h4 className="font-serif text-2xl font-bold dark:text-white">Nuevo Registro</h4>
+                                        <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-bold">Gestores y Entidades</p>
+                                    </div>
+                                </div>
                                 <button onClick={() => setIsCreating(false)} className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-white/5">
                                     <span className="material-symbols-outlined">close</span>
                                 </button>
                             </div>
-                            <div className="p-8 max-h-[80vh] overflow-y-auto no-scrollbar">
+                            <div className="p-8 max-h-[75vh] overflow-y-auto no-scrollbar">
                                 <NewUserForm user={user} onDone={() => { setIsCreating(false); onUpdate(); }} />
                             </div>
                         </motion.div>
@@ -1265,7 +1396,11 @@ const UserManagement = ({ user, users, onUpdate, isMobile }) => {
 
 
 const NewUserForm = ({ user, onDone }) => {
-    const [formData, setFormData] = useState({ username: '', name: '', email: '', password: '', confirmPassword: '', role: 'GESTOR', phone: '', authCode: '' });
+    const [formData, setFormData] = useState({
+        username: '', name: '', email: '', password: '', confirmPassword: '', role: 'GESTOR', phone: '', address: '', authCode: '',
+        experience: '', achievements: '', training: '', titles: '',
+        businessName: '', nit: '', contactPerson: ''
+    });
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e) => {
@@ -1311,6 +1446,46 @@ const NewUserForm = ({ user, onDone }) => {
                     />
                 </div>
                 <div className="space-y-2">
+                    <label className="text-sm font-bold text-primary dark:text-gray-300 ml-1">Email</label>
+                    <input
+                        type="email"
+                        className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white"
+                        value={formData.email}
+                        onChange={e => setFormData({ ...formData, email: e.target.value })}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <label className="text-sm font-bold text-primary dark:text-gray-300 ml-1">Teléfono</label>
+                    <input
+                        className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white"
+                        value={formData.phone}
+                        onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <label className="text-sm font-bold text-primary dark:text-gray-300 ml-1">Dirección / Sede</label>
+                    <input
+                        className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white"
+                        value={formData.address}
+                        onChange={e => setFormData({ ...formData, address: e.target.value })}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <label className="text-sm font-bold text-primary dark:text-gray-300 ml-1">Rol de Acceso</label>
+                    <div className="relative">
+                        <select
+                            className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm appearance-none text-gray-600 dark:text-gray-300 transition-all cursor-pointer"
+                            value={formData.role}
+                            onChange={e => setFormData({ ...formData, role: e.target.value })}
+                        >
+                            <option value="GESTOR">Gestor Administrativo</option>
+                            <option value="SUPERADMIN">Super Administrador</option>
+                            <option value="ENTIDAD">Entidad / Empresa</option>
+                        </select>
+                        <span className="material-symbols-outlined absolute right-4 top-3 pointer-events-none text-gray-400">expand_more</span>
+                    </div>
+                </div>
+                <div className="space-y-2">
                     <label className="text-sm font-bold text-primary dark:text-gray-300 ml-1">Contraseña</label>
                     <input
                         type="password"
@@ -1330,39 +1505,52 @@ const NewUserForm = ({ user, onDone }) => {
                         required
                     />
                 </div>
-                <div className="space-y-2">
-                    <label className="text-sm font-bold text-primary dark:text-gray-300 ml-1">Rol de Acceso</label>
-                    <div className="relative">
-                        <select
-                            className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm appearance-none text-gray-600 dark:text-gray-300 transition-all cursor-pointer"
-                            value={formData.role}
-                            onChange={e => setFormData({ ...formData, role: e.target.value })}
-                        >
-                            <option value="GESTOR">Gestor Administrativo</option>
-                            <option value="SUPERADMIN">Super Administrador</option>
-                            <option value="ENTIDAD">Entidad / Empresa</option>
-                        </select>
-                        <span className="material-symbols-outlined absolute right-4 top-3 pointer-events-none text-gray-400">expand_more</span>
+
+                {formData.role === 'GESTOR' && (
+                    <div className="md:col-span-2 space-y-6 pt-6 border-t border-gray-100 dark:border-white/5 animate-fade-in">
+                        <h6 className="text-xs font-bold text-accent uppercase tracking-widest">Información Profesional</h6>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Experiencia</label>
+                                <textarea className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white" rows="3" value={formData.experience} onChange={e => setFormData({ ...formData, experience: e.target.value })} />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Logros Profesionales</label>
+                                <textarea className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white" rows="3" value={formData.achievements} onChange={e => setFormData({ ...formData, achievements: e.target.value })} />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Titulaciones</label>
+                                <input className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white" value={formData.titles} onChange={e => setFormData({ ...formData, titles: e.target.value })} />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Simposios / Capacitaciones</label>
+                                <input className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white" value={formData.training} onChange={e => setFormData({ ...formData, training: e.target.value })} />
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div className="space-y-2">
-                    <label className="text-sm font-bold text-primary dark:text-gray-300 ml-1">Teléfono</label>
-                    <input
-                        className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white"
-                        value={formData.phone}
-                        onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                    />
-                </div>
+                )}
+
                 {formData.role === 'ENTIDAD' && (
-                    <div className="space-y-2 animate-fade-in md:col-span-2">
-                        <label className="text-sm font-bold text-accent ml-1 uppercase tracking-widest">Código de Autorización Corporativo</label>
-                        <input
-                            className="input-dashboard w-full px-4 py-3 rounded-xl bg-accent/5 border border-accent/20 outline-none text-sm text-primary dark:text-white font-mono tracking-widest"
-                            value={formData.authCode}
-                            onChange={e => setFormData({ ...formData, authCode: e.target.value.toUpperCase() })}
-                            placeholder="Ej: SKN0001"
-                            required
-                        />
+                    <div className="md:col-span-2 space-y-6 pt-6 border-t border-gray-100 dark:border-white/5 animate-fade-in">
+                        <h6 className="text-xs font-bold text-accent uppercase tracking-widest">Información Corporativa</h6>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Razón Social</label>
+                                <input className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white" value={formData.businessName} onChange={e => setFormData({ ...formData, businessName: e.target.value })} />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">NIT</label>
+                                <input className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white" value={formData.nit} onChange={e => setFormData({ ...formData, nit: e.target.value })} />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Responsable de Contacto</label>
+                                <input className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white" value={formData.contactPerson} onChange={e => setFormData({ ...formData, contactPerson: e.target.value })} />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-accent uppercase tracking-widest ml-1">Código Autorización</label>
+                                <input className="input-dashboard w-full px-4 py-3 rounded-xl bg-accent/5 border border-accent/20 outline-none text-sm text-primary dark:text-white font-mono" value={formData.authCode} onChange={e => setFormData({ ...formData, authCode: e.target.value.toUpperCase() })} required />
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>
@@ -1501,12 +1689,55 @@ const StatCard = ({ label, value, icon, color }) => {
     );
 };
 
+const ProfileDetailItem = ({ icon, label, content }) => (
+    <div className="bg-gray-50 dark:bg-white/5 p-6 rounded-2xl border border-gray-100 dark:border-white/5 space-y-2">
+        <div className="flex items-center gap-2 text-accent">
+            <span className="material-symbols-outlined text-lg">{icon}</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest">{label}</span>
+        </div>
+        <p className="text-sm text-primary dark:text-gray-200 whitespace-pre-wrap leading-relaxed">
+            {content || <span className="italic opacity-50">Información no disponible</span>}
+        </p>
+    </div>
+);
+
+const EditProfileInput = ({ label, value, onChange }) => (
+    <div className="space-y-2">
+        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">{label}</label>
+        <input
+            className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white"
+            value={value || ''}
+            onChange={e => onChange(e.target.value)}
+        />
+    </div>
+);
+
+const EditProfileArea = ({ label, value, onChange }) => (
+    <div className="space-y-2">
+        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">{label}</label>
+        <textarea
+            className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white min-h-[100px]"
+            value={value || ''}
+            onChange={e => onChange(e.target.value)}
+        />
+    </div>
+);
+
 const ProfileView = ({ user, onUpdate, isMobile }) => {
     const [formData, setFormData] = useState({
         username: user.username,
         name: user.name || '',
         email: user.email || '',
         phone: user.phone || '',
+        address: user.address || '',
+        experience: user.experience || '',
+        achievements: user.achievements || '',
+        training: user.training || '',
+        titles: user.titles || '',
+        specialties: user.specialties || '',
+        businessName: user.businessName || '',
+        nit: user.nit || '',
+        contactPerson: user.contactPerson || '',
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
@@ -1583,7 +1814,7 @@ const ProfileView = ({ user, onUpdate, isMobile }) => {
                 </div>
 
                 {/* Columna Derecha: Formulario */}
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-2 space-y-8">
                     <form onSubmit={handleSubmit} className="glass-panel p-8 md:p-10 rounded-3xl border border-gray-100 dark:border-white/5 space-y-8">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
@@ -1602,7 +1833,34 @@ const ProfileView = ({ user, onUpdate, isMobile }) => {
                                 <label className="text-xs font-bold text-primary dark:text-gray-300 ml-1 uppercase tracking-wider">Teléfono</label>
                                 <input className="input-dashboard w-full px-4 py-3 rounded-xl bg-white/50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
                             </div>
+                            <div className="md:col-span-2 space-y-2">
+                                <label className="text-xs font-bold text-primary dark:text-gray-300 ml-1 uppercase tracking-wider">Dirección</label>
+                                <input className="input-dashboard w-full px-4 py-3 rounded-xl bg-white/50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} />
+                            </div>
                         </div>
+
+                        {user.role === 'GESTOR' && (
+                            <div className="pt-8 border-t border-gray-100 dark:border-white/5 space-y-6">
+                                <h4 className="font-serif text-lg font-bold text-primary dark:text-white">Perfil Profesional (CV)</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <EditProfileArea label="Experiencia" value={formData.experience} onChange={v => setFormData({ ...formData, experience: v })} />
+                                    <EditProfileArea label="Logros Profesionales" value={formData.achievements} onChange={v => setFormData({ ...formData, achievements: v })} />
+                                    <EditProfileInput label="Titulaciones" value={formData.titles} onChange={v => setFormData({ ...formData, titles: v })} />
+                                    <EditProfileInput label="Simposios / Capacitaciones" value={formData.training} onChange={v => setFormData({ ...formData, training: v })} />
+                                </div>
+                            </div>
+                        )}
+
+                        {user.role === 'ENTIDAD' && (
+                            <div className="pt-8 border-t border-gray-100 dark:border-white/5 space-y-6">
+                                <h4 className="font-serif text-lg font-bold text-primary dark:text-white">Información Corporativa</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <EditProfileInput label="Razón Social" value={formData.businessName} onChange={v => setFormData({ ...formData, businessName: v })} />
+                                    <EditProfileInput label="NIT" value={formData.nit} onChange={v => setFormData({ ...formData, nit: v })} />
+                                    <EditProfileInput label="Responsable de Contacto" value={formData.contactPerson} onChange={v => setFormData({ ...formData, contactPerson: v })} />
+                                </div>
+                            </div>
+                        )}
 
                         <div className="pt-8 border-t border-gray-100 dark:border-white/5 space-y-6">
                             <h4 className="font-serif text-lg font-bold text-primary dark:text-white">Seguridad y Acceso</h4>
