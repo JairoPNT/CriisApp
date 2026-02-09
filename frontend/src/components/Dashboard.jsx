@@ -473,7 +473,7 @@ const CaseDetailView = ({ ticket, user, onClose }) => {
                         }`}>
                         {ticket.status}
                     </span>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-widest font-bold">
                         Caso #{ticket.id.replace(/-/g, '').slice(0, 8)} • {new Date(ticket.createdAt).toLocaleDateString()}
                     </p>
                     <button
@@ -700,7 +700,7 @@ const TicketList = ({ tickets, user, users, onUpdate, isMobile, showArchived, se
                                         <span className="material-symbols-outlined text-sm">share</span>
                                     </span>
                                     <span className="h-1 w-1 rounded-full bg-gray-300 dark:bg-gray-700"></span>
-                                    <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">
+                                    <span className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-widest font-bold">
                                         Gestor: {t.assignedTo?.username || 'Sin asignar'}
                                     </span>
                                 </div>
@@ -1067,7 +1067,7 @@ const ReportsView = ({ tickets, user, users, isMobile }) => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-primary/5 dark:bg-white/5 p-6 rounded-2xl border border-primary/10 dark:border-white/5 font-montserrat">
-                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Casos en el periodo</p>
+                        <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Casos en el periodo</p>
                         <p className="text-4xl font-bold text-primary dark:text-white">{filteredTickets.length}</p>
                     </div>
                     <div className="bg-accent/10 p-6 rounded-2xl border border-accent/20 font-montserrat">
@@ -1144,7 +1144,7 @@ const UserManagement = ({ user, users, onUpdate, isMobile }) => {
                         </div>
                         <div className="flex-1 overflow-hidden">
                             <h4 className="font-bold text-primary dark:text-white truncate">{u.name || u.username}</h4>
-                            <p className="text-xs text-gray-500 truncate">@{u.username}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">@{u.username}</p>
                             <span className="inline-block mt-2 px-2 py-0.5 rounded bg-accent/10 text-accent text-[10px] font-bold uppercase tracking-wider border border-accent/10">
                                 {u.role}
                             </span>
@@ -1299,7 +1299,7 @@ const UserManagement = ({ user, users, onUpdate, isMobile }) => {
                                     </div>
                                     <div className="text-center md:text-left space-y-3">
                                         <h5 className="text-3xl font-serif font-bold text-primary dark:text-white">{viewingProfile.name || viewingProfile.username}</h5>
-                                        <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-gray-500 font-medium">
+                                        <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-gray-500 dark:text-gray-400 font-medium">
                                             <div className="flex items-center gap-1.5"><span className="material-symbols-outlined text-sm">mail</span>{viewingProfile.email || 'N/A'}</div>
                                             <div className="flex items-center gap-1.5"><span className="material-symbols-outlined text-sm">call</span>{viewingProfile.phone || 'N/A'}</div>
                                             <div className="flex items-center gap-1.5"><span className="material-symbols-outlined text-sm">location_on</span>{viewingProfile.address || 'N/A'}</div>
@@ -1352,7 +1352,7 @@ const UserManagement = ({ user, users, onUpdate, isMobile }) => {
                                     <span className="material-symbols-outlined text-sm">edit</span>
                                     Editar Perfil
                                 </button>
-                                <button onClick={() => setViewingProfile(null)} className="px-6 py-3 border border-gray-200 dark:border-white/10 text-gray-500 rounded-xl font-bold text-sm">Cerrar</button>
+                                <button onClick={() => setViewingProfile(null)} className="px-6 py-3 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 rounded-xl font-bold text-sm">Cerrar</button>
                             </div>
                         </motion.div>
                     </div>
@@ -1511,19 +1511,19 @@ const NewUserForm = ({ user, onDone }) => {
                         <h6 className="text-xs font-bold text-accent uppercase tracking-widest">Información Profesional</h6>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Experiencia</label>
+                                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider ml-1">Experiencia</label>
                                 <textarea className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white" rows="3" value={formData.experience} onChange={e => setFormData({ ...formData, experience: e.target.value })} />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Logros Profesionales</label>
+                                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider ml-1">Logros Profesionales</label>
                                 <textarea className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white" rows="3" value={formData.achievements} onChange={e => setFormData({ ...formData, achievements: e.target.value })} />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Titulaciones</label>
+                                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider ml-1">Titulaciones</label>
                                 <input className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white" value={formData.titles} onChange={e => setFormData({ ...formData, titles: e.target.value })} />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Simposios / Capacitaciones</label>
+                                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider ml-1">Simposios / Capacitaciones</label>
                                 <input className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white" value={formData.training} onChange={e => setFormData({ ...formData, training: e.target.value })} />
                             </div>
                         </div>
@@ -1535,15 +1535,15 @@ const NewUserForm = ({ user, onDone }) => {
                         <h6 className="text-xs font-bold text-accent uppercase tracking-widest">Información Corporativa</h6>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Razón Social</label>
+                                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider ml-1">Razón Social</label>
                                 <input className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white" value={formData.businessName} onChange={e => setFormData({ ...formData, businessName: e.target.value })} />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">NIT</label>
+                                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider ml-1">NIT</label>
                                 <input className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white" value={formData.nit} onChange={e => setFormData({ ...formData, nit: e.target.value })} />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Responsable de Contacto</label>
+                                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider ml-1">Responsable de Contacto</label>
                                 <input className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white" value={formData.contactPerson} onChange={e => setFormData({ ...formData, contactPerson: e.target.value })} />
                             </div>
                             <div className="space-y-2">
@@ -1584,7 +1584,7 @@ const StatsView = ({ stats, users, user, onRefresh, isMobile }) => {
     if (!stats) return (
         <div className="flex flex-col items-center justify-center p-12 space-y-4">
             <div className="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-gray-500 font-serif">Cargando estadísticas...</p>
+            <p className="text-gray-500 dark:text-gray-400 font-serif">Cargando estadísticas...</p>
         </div>
     );
 
@@ -1594,7 +1594,7 @@ const StatsView = ({ stats, users, user, onRefresh, isMobile }) => {
             {/* Filtros */}
             <div className="glass-panel p-6 rounded-2xl border border-gray-100 dark:border-white/5 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Ciudad</label>
+                    <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest ml-1">Ciudad</label>
                     <div className="relative">
                         <select className="input-dashboard w-full px-4 py-2.5 rounded-xl bg-white/50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm appearance-none" value={filters.city} onChange={e => handleFilterChange('city', e.target.value)}>
                             <option value="">Todas</option>
@@ -1605,7 +1605,7 @@ const StatsView = ({ stats, users, user, onRefresh, isMobile }) => {
                 </div>
                 {user.role === 'SUPERADMIN' && (
                     <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Gestor</label>
+                        <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest ml-1">Gestor</label>
                         <div className="relative">
                             <select className="input-dashboard w-full px-4 py-2.5 rounded-xl bg-white/50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm appearance-none" value={filters.gestorId} onChange={e => handleFilterChange('gestorId', e.target.value)}>
                                 <option value="">Todos</option>
@@ -1616,7 +1616,7 @@ const StatsView = ({ stats, users, user, onRefresh, isMobile }) => {
                     </div>
                 )}
                 <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Estado</label>
+                    <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest ml-1">Estado</label>
                     <div className="relative">
                         <select className="input-dashboard w-full px-4 py-2.5 rounded-xl bg-white/50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm appearance-none" value={filters.status} onChange={e => handleFilterChange('status', e.target.value)}>
                             <option value="">Todos</option>
@@ -1626,7 +1626,7 @@ const StatsView = ({ stats, users, user, onRefresh, isMobile }) => {
                         <span className="material-symbols-outlined absolute right-3 top-2 pointer-events-none text-gray-400">expand_more</span>
                     </div>
                 </div>
-                <button className="px-4 py-2.5 bg-gray-100 dark:bg-white/5 text-gray-500 rounded-xl hover:bg-gray-200 dark:hover:bg-white/10 transition-all flex items-center justify-center" onClick={() => handleFilterChange('reset', '')}>
+                <button className="px-4 py-2.5 bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 rounded-xl hover:bg-gray-200 dark:hover:bg-white/10 transition-all flex items-center justify-center" onClick={() => handleFilterChange('reset', '')}>
                     <span className="material-symbols-outlined text-lg">refresh</span>
                 </button>
             </div>
@@ -1703,7 +1703,7 @@ const ProfileDetailItem = ({ icon, label, content }) => (
 
 const EditProfileInput = ({ label, value, onChange }) => (
     <div className="space-y-2">
-        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">{label}</label>
+        <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest ml-1">{label}</label>
         <input
             className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white"
             value={value || ''}
@@ -1714,7 +1714,7 @@ const EditProfileInput = ({ label, value, onChange }) => (
 
 const EditProfileArea = ({ label, value, onChange }) => (
     <div className="space-y-2">
-        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">{label}</label>
+        <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest ml-1">{label}</label>
         <textarea
             className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white min-h-[100px]"
             value={value || ''}
@@ -2133,7 +2133,7 @@ const TrainingsView = ({ user, isMobile }) => {
                                 <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Reserva #{t.id}</span>
                             </div>
                             <h4 className="text-lg font-bold text-primary dark:text-white">{t.entity?.name || t.entity?.username}</h4>
-                            <div className="flex flex-wrap gap-4 text-xs text-gray-500">
+                            <div className="flex flex-wrap gap-4 text-xs text-gray-500 dark:text-gray-400">
                                 <div className="flex items-center gap-1">
                                     <span className="material-symbols-outlined text-sm">event</span>
                                     {new Date(t.startTime).toLocaleDateString()}
@@ -2289,7 +2289,7 @@ const ReportShareModal = ({ ticket, user, onClose }) => {
                         <span className="material-symbols-outlined text-2xl text-accent">download</span>
                         <div className="text-left">
                             <p className="font-bold text-sm dark:text-white">Guardar PDF</p>
-                            <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Descarga Local</p>
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold tracking-tighter">Descarga Local</p>
                         </div>
                     </button>
                     <button onClick={() => handleShare('whatsapp')} className="flex items-center gap-4 p-4 rounded-2xl bg-green-500/10 text-green-600 hover:bg-green-600 hover:text-white transition-all border border-green-500/20">
