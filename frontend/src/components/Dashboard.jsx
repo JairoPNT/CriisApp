@@ -183,7 +183,7 @@ const Dashboard = ({ user: initialUser, onLogout, initialLogo }) => {
 
                 <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto no-scrollbar scroll-smooth">
                     {navItems.map((item) => (
-                        <button key={item.id} onClick={() => { setView(item.id); if (isMobile) setIsSidebarOpen(false); }} className={`flex items-center gap-3 px-4 py-3.5 w-full transition-all group rounded-xl font-medium ${view === item.id ? 'bg-white text-primary shadow-lg shadow-black/10' : 'text-gray-300 hover:bg-white/5 hover:text-white'} ${item.mt || ''}`}>
+                        <button key={item.id} onClick={() => { setView(item.id); if (isMobile) setIsSidebarOpen(false); }} className={`flex items-center gap-3 px-4 py-3.5 w-full text-left transition-all group rounded-xl font-medium ${view === item.id ? 'bg-white text-primary shadow-lg shadow-black/10' : 'text-gray-300 hover:bg-white/5 hover:text-white'} ${item.mt || ''}`}>
                             <span className={`material-symbols-outlined ${view === item.id ? 'text-accent' : 'group-hover:text-accent transition-colors'}`}>{item.icon}</span>
                             <span>{item.label}</span>
                         </button>
