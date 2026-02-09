@@ -149,8 +149,8 @@ const Dashboard = ({ user: initialUser, onLogout, initialLogo }) => {
     };
 
     return (
-        <div className="flex bg-light dark:bg-darkbg text-primary dark:text-gray-200 h-screen overflow-hidden transition-colors duration-500 w-full">
-            <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-sidebar text-white transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col shadow-2xl lg:shadow-none h-full`}>
+        <div className="flex bg-light dark:bg-darkbg text-[#1A2B2A] dark:text-text-dark h-screen overflow-hidden transition-colors duration-500 w-full">
+            <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-sidebar dark:bg-sidebar-dark text-white transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col shadow-2xl lg:shadow-none h-full`}>
                 <div className="p-8 flex flex-col items-center border-b border-white/10">
                     <div className="w-32 h-32 flex items-center justify-center mb-4 transition-all">
                         <img
@@ -159,7 +159,7 @@ const Dashboard = ({ user: initialUser, onLogout, initialLogo }) => {
                             className="w-full h-full object-contain drop-shadow-2xl"
                             onError={(e) => {
                                 e.target.style.display = 'none';
-                                e.target.parentElement.innerHTML = '<span class="material-symbols-outlined text-6xl text-accent">spa</span>';
+                                e.target.parentElement.innerHTML = '<span class="material-symbols-outlined text-6xl text-secondary">spa</span>';
                             }}
                         />
                     </div>
@@ -422,7 +422,7 @@ const NewTicketForm = ({ user, onSuccess, isMobile }) => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full md:w-auto px-8 py-4 bg-primary dark:bg-accent text-white dark:text-primary rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-primary/90 dark:hover:bg-accent/90 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2 disabled:opacity-50"
+                        className="w-full md:w-auto px-8 py-4 bg-primary text-white rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-primary-light transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2 disabled:opacity-50 font-serif"
                     >
                         <span>{loading ? 'Generando...' : 'Generar Ticket'}</span>
                         <span className="material-symbols-outlined">confirmation_number</span>
@@ -468,7 +468,7 @@ const CaseDetailView = ({ ticket, user, onClose }) => {
 
                 <div className="flex flex-col items-end gap-2">
                     <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest ${ticket.status === 'FINALIZADO' ? 'bg-success/10 text-success' :
-                        ticket.status === 'EN_SEGUIMIENTO' ? 'bg-blue-500/10 text-blue-500' :
+                        ticket.status === 'EN_SEGUIMIENTO' ? 'bg-secondary/10 text-secondary' :
                             'bg-orange-500/10 text-orange-500'
                         }`}>
                         {ticket.status}
@@ -777,7 +777,7 @@ const TicketList = ({ tickets, user, users, onUpdate, isMobile, showArchived, se
                                     <div className="flex items-center gap-2">
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setSelectedTicket(t); }}
-                                            className="px-6 py-2 bg-primary dark:bg-white text-white dark:text-primary rounded-xl text-sm font-bold shadow-lg hover:shadow-primary/20 dark:hover:shadow-white/10 transition-all hover:scale-105"
+                                            className="px-6 py-2 bg-primary text-white rounded-xl text-sm font-bold shadow-lg hover:shadow-primary/20 transition-all hover:scale-105 font-serif"
                                         >
                                             Gestionar
                                         </button>

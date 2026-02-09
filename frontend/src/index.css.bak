@@ -1,34 +1,23 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #004442;
-  /* Teal Oscuro */
-  --color-primary-light: #339997;
-  /* Teal Medio */
-  --color-secondary: #5c3031;
-  /* Borgoña */
-  --color-accent: #b67375;
-  /* Rosa Viejo */
-  --color-light: #F8FAF9;
-  /* Blanco con gota teal */
-  --color-darkbg: #0A1413;
-  /* Negro verdoso */
-  --color-sidebar: #004442;
-  --color-card-dark: #142624;
-  /* Teal muy oscuro */
-  --color-sidebar-dark: #002D2B;
-  /* Version mas profunda */
-  --color-text-dark: #E0E8E7;
-  /* Gris muy claro */
+  --color-primary: #1a2e26;
+  /* Verde Bosque profundo para mejor contraste */
+  --color-primary-light: #2C4A3B;
+  /* El verde original para acentos */
+  --color-secondary: #6B8E23;
+  --color-accent: #C5A059;
+  --color-light: #F4F7F2;
+  --color-darkbg: #0d1f18;
+  --color-sidebar: #1F352A;
 
   --font-serif: "Playfair Display", serif;
   --font-sans: "Montserrat", sans-serif;
 
-  --color-success: #90cbb6;
-  /* Verde claro sugerido */
+  /* Replicating utility-like variables if needed */
+  --color-success: #10b981;
   --color-warning: #f59e0b;
-  --color-error: #e5b3ad;
-  /* Rosa claro sugerido */
+  --color-error: #ef4444;
 }
 
 /* Habilitar modo oscuro por clase en Tailwind 4 */
@@ -41,44 +30,55 @@ body {
   position: relative;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 :root {
-  --primary-teal: #004442;
-  --secondary-burgundy: #5c3031;
+  --primary-earth: #1a2e26;
+  --secondary-earth: #6B8E23;
+  --pale-green: #F4F7F2;
+  --accent: #C5A059;
 }
 
 /* --- ESTILOS MODO CLARO (Default) --- */
 body {
-  @apply bg-light text-[#1A2B2A] min-h-screen transition-colors duration-500 font-sans;
+  @apply bg-light text-primary min-h-screen transition-colors duration-500 font-sans;
   background-color: var(--color-light);
+  /* Fondo sólido explícito */
   background-image:
-    radial-gradient(at 0% 0%, rgba(0, 68, 66, 0.05) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(182, 115, 117, 0.08) 0px, transparent 50%);
+    radial-gradient(at 0% 0%, rgba(107, 142, 35, 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(197, 160, 89, 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(44, 74, 59, 0.05) 0px, transparent 50%);
   background-attachment: fixed;
 }
 
 .glass-card {
-  @apply bg-white backdrop-blur-lg border border-gray-100 shadow-xl transition-all duration-300;
+  @apply bg-white/45 backdrop-blur-lg border border-white/60 shadow-xl transition-all duration-300;
 }
 
 .glass-panel {
-  @apply bg-white/90 backdrop-blur-md border border-gray-100 shadow-md;
+  @apply bg-white/70 backdrop-blur-md border border-white/80 shadow-md;
 }
 
 /* --- ESTILOS MODO OSCURO (.dark) --- */
 .dark body {
-  @apply bg-darkbg text-[#E0E8E7];
+  @apply bg-darkbg text-gray-200;
   background-color: var(--color-darkbg);
+  /* Fondo oscuro explícito */
   background-image:
-    radial-gradient(at 0% 0%, rgba(0, 68, 66, 0.2) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(182, 115, 117, 0.1) 0px, transparent 50%);
+    radial-gradient(at 0% 0%, rgba(44, 74, 59, 0.4) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(197, 160, 89, 0.15) 0px, transparent 50%);
 }
 
 .dark .glass-card {
-  @apply bg-[#142624] border-white/5 shadow-2xl;
+  @apply bg-emerald-950/60 border-white/10 shadow-2xl;
 }
 
 .dark .glass-panel {
-  @apply bg-[#142624]/90 border-white/5 shadow-xl;
+  @apply bg-emerald-900/60 border-white/5 shadow-xl;
 }
 
 /* Hover general */
