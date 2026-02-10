@@ -136,9 +136,7 @@ const getAvailableSlots = async (dateStr, durationHours, customCalendarId = null
     const workStart = new Date(`${dateStr}T08:00:00-05:00`);
     const workEnd = new Date(`${dateStr}T18:00:00-05:00`);
 
-    const calendarIds = customCalendarId
-        ? [{ id: customCalendarId }]
-        : [{ id: process.env.GOOGLE_CALENDAR_ID }, { id: process.env.GOOGLE_SECONDARY_CALENDAR_ID }];
+    const calendarIds = getCalendarIds(customCalendarId);
 
     try {
         const response = await calendar.freebusy.query({
