@@ -16,6 +16,7 @@ const BookingPage = ({ onBack }) => {
     });
     const [busySlots, setBusySlots] = useState([]);
     const [availableSlots, setAvailableSlots] = useState([]);
+    const [dayAvailability, setDayAvailability] = useState({}); // Cache de disponibilidad por día
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
@@ -55,6 +56,50 @@ const BookingPage = ({ onBack }) => {
         };
         fetchBusyDots();
     }, [currentMonth, selectedManager]);
+
+    // Precalcular disponibilidad para cada día del mes
+    useEffect(() => {
+        if (!selectedManager || !formData.duration) return;
+
+        const fetchMonthAvailability = async () => {
+            const m = currentMonth.getMonth();
+            const y = currentMonth.getFullYear();
+            const daysInMonth = new Date(y, m + 1, 0).getDate();
+            const availability = {};
+
+            // Consultar disponibilidad para cada día del mes
+            const promises = [];
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const dateObj = new Date(y, m, d);
+
+                // Saltar domingos y días pasados
+                if (dateObj.getDay() === 0 || new Date(dateStr + 'T23:59:59') < new Date()) {
+                    availability[dateStr] = { hasSlots: false, isBusy: false };
+                    continue;
+                }
+
+                promises.push(
+                    fetch(`${API_URL}/api/training/slots?date=${dateStr}&duration=${formData.duration}&managerId=${selectedManager.id}`)
+                        .then(res => res.json())
+                        .then(slots => {
+                            availability[dateStr] = {
+                                hasSlots: Array.isArray(slots) && slots.length > 0,
+                                isBusy: busySlots.some(s => s.start && s.start.startsWith(dateStr))
+                            };
+                        })
+                        .catch(() => {
+                            availability[dateStr] = { hasSlots: false, isBusy: false };
+                        })
+                );
+            }
+
+            await Promise.all(promises);
+            setDayAvailability(availability);
+        };
+
+        fetchMonthAvailability();
+    }, [currentMonth, selectedManager, formData.duration, busySlots]);
 
     // Fetch Available Slots
     useEffect(() => {
@@ -124,33 +169,19 @@ const BookingPage = ({ onBack }) => {
             const isSelected = formData.date === dStr;
             const isPast = new Date(dStr + 'T23:59:59') < new Date();
 
-            // Lógica de colores basada en horas ocupadas reales
-            const slotsToFilter = Array.isArray(busySlots) ? busySlots : [];
+            // Obtener disponibilidad precalculada
+            const dayInfo = dayAvailability[dStr] || { hasSlots: true, isBusy: false };
 
-            // Filtrar eventos del día
-            const dayEvents = slotsToFilter.filter(s => {
-                if (!s.start || !s.end) return false;
-                // Convertir a fecha local para comparar día
-                const eventStart = new Date(s.start);
-                return eventStart.getDate() === d && eventStart.getMonth() === m && eventStart.getFullYear() === y;
-            });
-
-            // Calcular horas totales ocupadas
-            let totalBusyHours = 0;
-            dayEvents.forEach(event => {
-                const start = new Date(event.start);
-                const end = new Date(event.end);
-                // Diferencia en horas
-                const duration = (end - start) / (1000 * 60 * 60);
-                totalBusyHours += duration;
-            });
-
-            // Asumiendo jornada laboral de 10 horas (8am - 6pm)
-            // Rojo: >= 8 horas ocupadas (casi lleno)
-            // Verde: > 0 y < 8 horas ocupadas (parcial)
+            // Lógica de colores basada en disponibilidad REAL
             let statusColor = "";
-            if (totalBusyHours >= 8) statusColor = "bg-red-500";
-            else if (totalBusyHours > 0) statusColor = "bg-green-500";
+            if (!dayInfo.hasSlots && dayInfo.isBusy) {
+                // Tiene eventos Y no tiene slots disponibles = ROJO (ocupado)
+                statusColor = "bg-red-500";
+            } else if (dayInfo.isBusy && dayInfo.hasSlots) {
+                // Tiene eventos PERO sí tiene slots disponibles = VERDE (parcial)
+                statusColor = "bg-green-500";
+            }
+            // Si no tiene eventos (isBusy = false) = sin color (libre)
 
             cells.push(
                 <button
