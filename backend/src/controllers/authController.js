@@ -93,7 +93,7 @@ const getUsers = async (req, res) => {
         const users = await prisma.user.findMany({
             select: {
                 id: true, username: true, name: true, role: true, email: true, phone: true, avatar: true, address: true,
-                experience: true, achievements: true, training: true, titles: true, specialties: true,
+                experience: true, achievements: true, trainingInfo: true, titles: true, specialties: true,
                 businessName: true, nit: true, contactPerson: true
             }
         });
