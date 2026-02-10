@@ -3,8 +3,12 @@ import { motion } from 'framer-motion';
 import logoSkinHealth from '../assets/logo_skinhealth.png';
 
 const WelcomePage = ({ onNavigate, logo, favicon, horizontalLogo, activeManagers = [] }) => {
-    // Para el diseño de Tailwind del documento, usaremos clases de utilidad
-    // y manejaremos el modo oscuro mediante la clase 'dark' en el documento raíz.
+    const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
+    const toggleDarkMode = () => {
+        const newMode = !isDark;
+        setIsDark(newMode);
+        document.documentElement.classList.toggle('dark', newMode);
+    };
 
     return (
         <div className="min-h-screen flex flex-col font-sans text-primary dark:text-gray-200 overflow-x-hidden selection:bg-accent/30 selection:text-white transition-colors duration-500">
@@ -167,11 +171,12 @@ const WelcomePage = ({ onNavigate, logo, favicon, horizontalLogo, activeManagers
             </footer>
 
             <button
-                onClick={() => document.documentElement.classList.toggle('dark')}
+                onClick={toggleDarkMode}
                 className="fixed bottom-6 right-6 w-12 h-12 bg-white/80 dark:bg-gray-800/80 backdrop-blur text-primary dark:text-accent rounded-full shadow-lg border border-white dark:border-gray-700 flex items-center justify-center hover:scale-110 transition-all z-50 group"
             >
-                <span className="material-symbols-outlined text-xl group-hover:rotate-180 transition-transform duration-500 dark:hidden block">dark_mode</span>
-                <span className="material-symbols-outlined text-xl group-hover:rotate-180 transition-transform duration-500 hidden dark:block">light_mode</span>
+                <span className="material-symbols-outlined text-xl group-hover:rotate-180 transition-transform duration-500">
+                    {isDark ? 'light_mode' : 'dark_mode'}
+                </span>
             </button>
 
         </div >

@@ -16,6 +16,13 @@ const Dashboard = ({ user: initialUser, onLogout, initialLogo }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
     const [showArchived, setShowArchived] = useState(false);
+    const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
+
+    const toggleDarkMode = () => {
+        const newMode = !isDark;
+        setIsDark(newMode);
+        document.documentElement.classList.toggle('dark', newMode);
+    };
 
     useEffect(() => {
         const handleResize = () => {
@@ -58,8 +65,11 @@ const Dashboard = ({ user: initialUser, onLogout, initialLogo }) => {
                 headers: { 'Authorization': `Bearer ${user.token}` }
             });
             const data = await response.json();
-            setTickets(data);
-        } catch (err) { console.error('Error fetching tickets:', err); }
+            setTickets(Array.isArray(data) ? data : []);
+        } catch (err) {
+            console.error('Error fetching tickets:', err);
+            setTickets([]);
+        }
     };
 
     const fetchStats = async (filters = {}) => {
@@ -79,8 +89,11 @@ const Dashboard = ({ user: initialUser, onLogout, initialLogo }) => {
                 headers: { 'Authorization': `Bearer ${user.token}` }
             });
             const data = await response.json();
-            setUsers(data);
-        } catch (err) { console.error('Error fetching users:', err); }
+            setUsers(Array.isArray(data) ? data : []);
+        } catch (err) {
+            console.error('Error fetching users:', err);
+            setUsers([]);
+        }
     };
 
     const fetchSettings = async () => {
@@ -114,10 +127,10 @@ const Dashboard = ({ user: initialUser, onLogout, initialLogo }) => {
         { id: 'profile', label: 'Mi Perfil', icon: 'person', mt: 'mt-8' }
     ];
 
-    if (user.role === 'SUPERADMIN') {
-        navItems.push({ id: 'users', label: 'Gestión Usuarios', icon: 'group' });
-        navItems.push({ id: 'trainings', label: 'Gestión Capacitaciones', icon: 'calendar_month' });
-        navItems.push({ id: 'settings', label: 'Configuración', icon: 'settings' });
+    if (user.role === 'SUPERADMIN' || user.role === 'GESTOR') {
+        if (user.role === 'SUPERADMIN') navItems.push({ id: 'users', label: 'Gestión Usuarios', icon: 'group' });
+        navItems.push({ id: 'trainings', label: 'Capacitaciones', icon: 'calendar_month' });
+        if (user.role === 'SUPERADMIN') navItems.push({ id: 'settings', label: 'Configuración', icon: 'settings' });
     }
 
     const viewTitleMap = {
@@ -192,11 +205,12 @@ const Dashboard = ({ user: initialUser, onLogout, initialLogo }) => {
 
                 <div className="p-4 border-t border-white/10 space-y-2">
                     <button
-                        onClick={() => document.documentElement.classList.toggle('dark')}
+                        onClick={toggleDarkMode}
                         className="flex items-center justify-center gap-2 w-full py-3 border border-white/10 rounded-lg text-sm text-gray-300 hover:bg-white/5 transition-all group"
                     >
-                        <span className="material-symbols-outlined text-lg group-hover:rotate-45 transition-transform dark:hidden block">dark_mode</span>
-                        <span className="material-symbols-outlined text-lg group-hover:rotate-45 transition-transform hidden dark:block">light_mode</span>
+                        <span className="material-symbols-outlined text-lg group-hover:rotate-45 transition-transform">
+                            {isDark ? 'light_mode' : 'dark_mode'}
+                        </span>
                         Cambiar Tema
                     </button>
                     <button onClick={onLogout} className="flex items-center justify-center gap-2 w-full py-3 border border-white/20 rounded-lg text-sm text-gray-300 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 transition-all">
@@ -227,11 +241,12 @@ const Dashboard = ({ user: initialUser, onLogout, initialLogo }) => {
                     </div>
                     <div className="flex items-center gap-1">
                         <button
-                            onClick={() => document.documentElement.classList.toggle('dark')}
+                            onClick={toggleDarkMode}
                             className="p-2 rounded-lg text-primary dark:text-white hover:bg-gray-100 dark:hover:bg-white/10"
                         >
-                            <span className="material-symbols-outlined text-xl dark:hidden block">dark_mode</span>
-                            <span className="material-symbols-outlined text-xl hidden dark:block">light_mode</span>
+                            <span className="material-symbols-outlined text-xl">
+                                {isDark ? 'light_mode' : 'dark_mode'}
+                            </span>
                         </button>
                         <button onClick={toggleSidebar} className="p-2 rounded-lg text-primary dark:text-white hover:bg-gray-100 dark:hover:bg-white/10">
                             <span className="material-symbols-outlined text-xl">menu</span>
@@ -990,6 +1005,10 @@ const ReportsView = ({ tickets, user, users, isMobile }) => {
     const [filteredTickets, setFilteredTickets] = useState([]);
 
     useEffect(() => {
+        if (!Array.isArray(tickets)) {
+            setFilteredTickets([]);
+            return;
+        }
         const filtered = tickets.filter(t => {
             const ticketDate = new Date(t.createdAt).toISOString().split('T')[0];
             const dateMatch = ticketDate >= startDate && ticketDate <= endDate;
@@ -1015,8 +1034,8 @@ const ReportsView = ({ tickets, user, users, isMobile }) => {
         doc.text(`Fecha del Reporte: ${now}`, 20, 60);
         doc.text(`Periodo: desde ${startDate} hasta ${endDate}`, 20, 70);
         if (selectedGestor !== 'all') {
-            const gName = users.find(u => u.id === parseInt(selectedGestor))?.username;
-            doc.text(`Gestor: ${gName}`, 20, 80);
+            const gName = Array.isArray(users) ? users.find(u => u.id === parseInt(selectedGestor))?.username : 'Gestor no encontrado';
+            doc.text(`Gestor: ${gName || 'No asignado'}`, 20, 80);
         }
 
         doc.line(20, 85, 190, 85);
@@ -1057,7 +1076,7 @@ const ReportsView = ({ tickets, user, users, isMobile }) => {
                             <div className="relative">
                                 <select className="input-dashboard w-full px-4 py-3 rounded-xl bg-white/50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm appearance-none text-gray-600 dark:text-gray-300 transition-all cursor-pointer" value={selectedGestor} onChange={e => setSelectedGestor(e.target.value)}>
                                     <option value="all">Todos los gestores</option>
-                                    {users.map(u => <option key={u.id} value={u.id}>{u.username}</option>)}
+                                    {Array.isArray(users) && users.map(u => <option key={u.id} value={u.id}>{u.username}</option>)}
                                 </select>
                                 <span className="material-symbols-outlined absolute right-4 top-3 pointer-events-none text-gray-400">expand_more</span>
                             </div>
@@ -1125,7 +1144,7 @@ const UserManagement = ({ user, users, onUpdate, isMobile }) => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {users.map(u => (
+                {Array.isArray(users) && users.map(u => (
                     <motion.div
                         key={u.id}
                         initial={{ opacity: 0, scale: 0.95 }}
@@ -1598,7 +1617,7 @@ const StatsView = ({ stats, users, user, onRefresh, isMobile }) => {
                     <div className="relative">
                         <select className="input-dashboard w-full px-4 py-2.5 rounded-xl bg-white/50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm appearance-none" value={filters.city} onChange={e => handleFilterChange('city', e.target.value)}>
                             <option value="">Todas</option>
-                            {stats.cityStats.map(c => <option key={c.city} value={c.city}>{c.city}</option>)}
+                            {stats.cityStats?.map(c => <option key={c.city} value={c.city}>{c.city}</option>)}
                         </select>
                         <span className="material-symbols-outlined absolute right-3 top-2 pointer-events-none text-gray-400">expand_more</span>
                     </div>
@@ -1609,7 +1628,7 @@ const StatsView = ({ stats, users, user, onRefresh, isMobile }) => {
                         <div className="relative">
                             <select className="input-dashboard w-full px-4 py-2.5 rounded-xl bg-white/50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm appearance-none" value={filters.gestorId} onChange={e => handleFilterChange('gestorId', e.target.value)}>
                                 <option value="">Todos</option>
-                                {users.map(u => <option key={u.id} value={u.id}>{u.username}</option>)}
+                                {Array.isArray(users) && users.map(u => <option key={u.id} value={u.id}>{u.username}</option>)}
                             </select>
                             <span className="material-symbols-outlined absolute right-3 top-2 pointer-events-none text-gray-400">expand_more</span>
                         </div>
@@ -1633,27 +1652,27 @@ const StatsView = ({ stats, users, user, onRefresh, isMobile }) => {
 
             {/* Tarjetas */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatCard label="Total PQRs" value={stats.totalTickets} icon="all_inbox" color="primary" />
-                <StatCard label="Finalizados" value={stats.resolvedTickets} icon="task_alt" color="success" />
-                <StatCard label="Ingresos" value={`$${stats.totalRevenue.toLocaleString()}`} icon="payments" color="accent" />
+                <StatCard label="Total PQRs" value={stats.totalTickets || 0} icon="all_inbox" color="primary" />
+                <StatCard label="Finalizados" value={stats.resolvedTickets || 0} icon="task_alt" color="success" />
+                <StatCard label="Ingresos" value={`$${(stats.totalRevenue || 0).toLocaleString()}`} icon="payments" color="accent" />
             </div>
 
             {/* Detalle por Ciudad */}
             <div className="glass-panel p-8 rounded-2xl border border-gray-100 dark:border-white/5">
                 <h4 className="font-montserrat text-xl font-bold text-primary dark:text-white mb-6">Distribución Geográfica</h4>
                 <div className="space-y-4">
-                    {stats.cityStats.map((c, idx) => (
+                    {stats.cityStats?.map((c, idx) => (
                         <div key={c.city} className="flex items-center gap-4 group">
                             <span className="text-sm font-bold text-gray-400 w-8 font-montserrat">0{idx + 1}</span>
                             <div className="flex-1 space-y-1">
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="font-bold text-primary dark:text-gray-200 uppercase tracking-wider">{c.city}</span>
-                                    <span className="text-accent font-bold font-montserrat">{c._count._all} casos</span>
+                                    <span className="text-accent font-bold font-montserrat">{c._count?._all || 0} casos</span>
                                 </div>
                                 <div className="h-1.5 w-full bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
                                     <motion.div
                                         initial={{ width: 0 }}
-                                        animate={{ width: `${(c._count._all / stats.totalTickets) * 100}%` }}
+                                        animate={{ width: `${((c._count?._all || 0) / (stats.totalTickets || 1)) * 100}%` }}
                                         className="h-full bg-accent"
                                     />
                                 </div>
@@ -1958,14 +1977,14 @@ const BrandManagement = ({ user }) => {
                 <div className="flex gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-xl w-fit">
                     <button
                         type="button"
-                        className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${uploadMode === 'url' ? 'bg-white dark:bg-sidebar text-primary shadow-sm' : 'text-gray-500 hover:text-primary'}`}
+                        className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${uploadMode === 'url' ? 'bg-white dark:bg-sidebar text-primary dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white'}`}
                         onClick={() => setUploadMode('url')}
                     >
                         URL Externa
                     </button>
                     <button
                         type="button"
-                        className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${uploadMode === 'file' ? 'bg-white dark:bg-sidebar text-primary shadow-sm' : 'text-gray-500 hover:text-primary'}`}
+                        className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${uploadMode === 'file' ? 'bg-white dark:bg-sidebar text-primary dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-white'}`}
                         onClick={() => setUploadMode('file')}
                     >
                         Subir Archivo
@@ -2082,6 +2101,9 @@ const BrandManagement = ({ user }) => {
 const TrainingsView = ({ user, isMobile }) => {
     const [trainings, setTrainings] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [selectedTraining, setSelectedTraining] = useState(null);
+    const [editData, setEditData] = useState({});
+    const [showModal, setShowModal] = useState(false);
 
     const fetchTrainings = async () => {
         try {
@@ -2098,6 +2120,24 @@ const TrainingsView = ({ user, isMobile }) => {
         fetchTrainings();
     }, []);
 
+    const handleUpdate = async (e) => {
+        e.preventDefault();
+        try {
+            const response = await fetch(`${API_URL}/api/training/progress/${selectedTraining.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${user.token}`
+                },
+                body: JSON.stringify(editData)
+            });
+            if (response.ok) {
+                setShowModal(false);
+                fetchTrainings();
+            }
+        } catch (err) { alert('Error al actualizar'); }
+    };
+
     const handleDelete = async (id) => {
         if (!window.confirm('¿Estás seguro de que deseas eliminar esta reserva?')) return;
         try {
@@ -2112,57 +2152,161 @@ const TrainingsView = ({ user, isMobile }) => {
         } catch (err) { alert('Error al eliminar'); }
     };
 
-    if (loading) return <div className="text-center p-12 italic opacity-50">Cargando capacitaciones...</div>;
+    if (loading) return (
+        <div className="flex flex-col items-center justify-center p-12 space-y-4">
+            <div className="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-sm font-serif opacity-50">Cargando agenda de capacitaciones...</p>
+        </div>
+    );
 
     return (
-        <div className="space-y-6 animate-fade-in">
-            <div className="grid gap-4">
-                {trainings.length > 0 ? trainings.map((t, idx) => (
-                    <motion.div
-                        key={t.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.05 }}
-                        className="glass-panel p-5 md:p-6 rounded-2xl border border-gray-100 dark:border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-6"
-                    >
-                        <div className="flex-1 space-y-2">
-                            <div className="flex items-center gap-3">
-                                <span className="bg-accent/10 text-accent px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest border border-accent/10">
-                                    {t.status}
-                                </span>
-                                <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Reserva #{t.id}</span>
+        <div className="space-y-6 animate-fade-in relative">
+            <div className="flex justify-end gap-2 mb-4">
+                <button onClick={fetchTrainings} className="p-3 bg-gray-100 dark:bg-white/5 rounded-xl hover:bg-gray-200 dark:hover:bg-white/10 transition-all flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest">
+                    <span className="material-symbols-outlined text-sm">sync</span>
+                    Sincronizar
+                </button>
+            </div>
+
+            <div className="grid gap-6">
+                {trainings.length > 0 ? trainings.map((t, idx) => {
+                    const durationHours = Math.round((new Date(t.endTime) - new Date(t.startTime)) / 3600000);
+                    return (
+                        <motion.div
+                            key={t.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.05 }}
+                            className="glass-panel p-6 rounded-3xl border border-gray-100 dark:border-white/5 flex flex-col md:flex-row md:items-center gap-6 group hover:border-accent/30 transition-all"
+                        >
+                            <div className="flex-1 space-y-3">
+                                <div className="flex items-center gap-3">
+                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest border ${t.status === 'COMPLETADA' ? 'bg-green-500/10 text-green-500 border-green-500/10' :
+                                        t.status === 'CANCELADA' ? 'bg-red-500/10 text-red-500 border-red-500/10' :
+                                            'bg-accent/10 text-accent border-accent/10'
+                                        }`}>
+                                        {t.status}
+                                    </span>
+                                    <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Reserva #{t.id}</span>
+                                </div>
+
+                                <div>
+                                    <h4 className="text-lg font-bold text-primary dark:text-white font-serif">{t.description || 'Sin descripción'}</h4>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Reservado por: {t.entity?.businessName || t.entity?.name || t.entity?.username}</p>
+                                </div>
+
+                                <div className="flex flex-wrap gap-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                                    <div className="flex items-center gap-1.5"><span className="material-symbols-outlined text-sm text-accent">event</span> {new Date(t.startTime).toLocaleDateString()}</div>
+                                    <div className="flex items-center gap-1.5"><span className="material-symbols-outlined text-sm text-accent">schedule</span> {new Date(t.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ({durationHours}H)</div>
+                                    <div className="flex items-center gap-1.5"><span className="material-symbols-outlined text-sm text-accent">person</span> {t.manager?.name || t.manager?.username || 'Gestor no asignado'}</div>
+                                </div>
                             </div>
-                            <h4 className="text-lg font-bold text-primary dark:text-white">{t.entity?.name || t.entity?.username}</h4>
-                            <div className="flex flex-wrap gap-4 text-xs text-gray-500 dark:text-gray-400">
-                                <div className="flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-sm">event</span>
-                                    {new Date(t.startTime).toLocaleDateString()}
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-sm">schedule</span>
-                                    {new Date(t.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(t.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </div>
-                                {t.calendarEventId && (
-                                    <div className="flex items-center gap-1 text-success">
-                                        <span className="material-symbols-outlined text-sm">check_circle</span>
-                                        Google Calendar
-                                    </div>
+
+                            <div className="flex items-center gap-3 shrink-0">
+                                <button
+                                    onClick={() => { setSelectedTraining(t); setEditData(t); setShowModal(true); }}
+                                    className="px-6 py-3 bg-white dark:bg-white/5 border border-gray-100 dark:border-white/5 rounded-2xl text-xs font-bold text-primary dark:text-white hover:bg-accent hover:text-primary transition-all shadow-lg hover:shadow-accent/40"
+                                >
+                                    Detalles / Editar
+                                </button>
+                                {user.role === 'SUPERADMIN' && (
+                                    <button
+                                        onClick={() => handleDelete(t.id)}
+                                        className="p-3 bg-red-500/10 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all border border-red-500/20"
+                                    >
+                                        <span className="material-symbols-outlined">delete</span>
+                                    </button>
                                 )}
                             </div>
-                        </div>
-                        <button
-                            onClick={() => handleDelete(t.id)}
-                            className="p-3 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all border border-red-500/20"
-                        >
-                            <span className="material-symbols-outlined">delete</span>
-                        </button>
-                    </motion.div>
-                )) : (
-                    <div className="text-center py-20 bg-gray-50/50 dark:bg-black/10 rounded-3xl border border-dashed border-gray-200 dark:border-white/10 italic text-gray-400">
-                        No hay reservas programadas aún.
+                        </motion.div>
+                    );
+                }) : (
+                    <div className="text-center py-20 bg-gray-50/50 dark:bg-black/10 rounded-3xl border border-dashed border-gray-200 dark:border-white/10 italic text-gray-400 flex flex-col items-center gap-4">
+                        <span className="material-symbols-outlined text-5xl">event_busy</span>
+                        <p>No hay reservas programadas aún.</p>
                     </div>
                 )}
             </div>
+
+            {/* Modal de Edición/Detalle */}
+            <AnimatePresence>
+                {showModal && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-white dark:bg-sidebar-dark w-full max-w-2xl rounded-[32px] overflow-hidden shadow-2xl border border-white dark:border-white/10"
+                        >
+                            <div className="p-8 border-b border-gray-100 dark:border-white/5 flex justify-between items-start">
+                                <div>
+                                    <h3 className="text-2xl font-serif font-bold text-primary dark:text-white">Seguimiento de Capacitación</h3>
+                                    <p className="text-[10px] font-bold text-accent uppercase tracking-widest mt-1">ID Reserva: #{selectedTraining?.id}</p>
+                                </div>
+                                <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-all"><span className="material-symbols-outlined">close</span></button>
+                            </div>
+
+                            <div className="p-8 overflow-y-auto max-h-[70vh] custom-scrollbar">
+                                <form onSubmit={handleUpdate} className="space-y-8">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Asistencia (Personas)</label>
+                                            <input type="number" className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border-none outline-none dark:text-white" value={editData.attendance || ''} onChange={e => setEditData({ ...editData, attendance: e.target.value })} placeholder="Ej: 15" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Volumen de Venta Proyectado</label>
+                                            <input type="number" className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border-none outline-none dark:text-white" value={editData.salesVolume || ''} onChange={e => setEditData({ ...editData, salesVolume: e.target.value })} placeholder="Ej: 1200000" />
+                                        </div>
+                                        <div className="space-y-2 sm:col-span-2">
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Estado de la Capacitación</label>
+                                            <select className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border-none outline-none dark:text-white appearance-none" value={editData.status || 'CONFIRMADA'} onChange={e => setEditData({ ...editData, status: e.target.value })}>
+                                                <option value="CONFIRMADA">CONFIRMADA</option>
+                                                <option value="COMPLETADA">COMPLETADA</option>
+                                                <option value="CANCELADA">CANCELADA</option>
+                                                <option value="SIN_ASISTENCIA">SIN ASISTENCIA</option>
+                                            </select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-accent uppercase tracking-widest ml-1">Fecha/Hora Inicio</label>
+                                            <input
+                                                type="datetime-local"
+                                                className="input-dashboard w-full px-4 py-3 rounded-xl bg-accent/5 dark:bg-accent/10 border border-accent/20 outline-none dark:text-white"
+                                                value={editData.startTime ? new Date(new Date(editData.startTime).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}
+                                                onChange={e => setEditData({ ...editData, startTime: new Date(e.target.value).toISOString() })}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-accent uppercase tracking-widest ml-1">Fecha/Hora Fin</label>
+                                            <input
+                                                type="datetime-local"
+                                                className="input-dashboard w-full px-4 py-3 rounded-xl bg-accent/5 dark:bg-accent/10 border border-accent/20 outline-none dark:text-white"
+                                                value={editData.endTime ? new Date(new Date(editData.endTime).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}
+                                                onChange={e => setEditData({ ...editData, endTime: new Date(e.target.value).toISOString() })}
+                                            />
+                                        </div>
+                                        <div className="space-y-2 sm:col-span-2">
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Notas Pre-Capacitación</label>
+                                            <textarea className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border-none outline-none dark:text-white min-h-[80px]" value={editData.notesPre || ''} onChange={e => setEditData({ ...editData, notesPre: e.target.value })} placeholder="Ej: Cliente solicita refuerzo en técnicas..." />
+                                        </div>
+                                        <div className="space-y-2 sm:col-span-2">
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Notas Post-Capacitación</label>
+                                            <textarea className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border-none outline-none dark:text-white min-h-[100px]" value={editData.notesPost || ''} onChange={e => setEditData({ ...editData, notesPost: e.target.value })} placeholder="Ej: Se logró buena receptividad, resolver dudas sobre X..." />
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        className="w-full py-4 bg-primary dark:bg-accent text-white dark:text-primary rounded-2xl font-bold shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <span className="material-symbols-outlined">save</span>
+                                        GUARDAR CAMBIOS
+                                    </button>
+                                </form>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

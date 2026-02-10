@@ -18,7 +18,7 @@ app.use(helmet({
 // Rate Limiting: General
 const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    max: 1000, // Aumentado para evitar bloqueos en uso normal/dev
     message: 'Demasiadas peticiones desde esta IP, por favor intenta de nuevo más tarde.'
 });
 app.use('/api/', generalLimiter);

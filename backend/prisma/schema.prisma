@@ -8,54 +8,51 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  username  String   @unique
-  name      String?
-  email     String?  @unique
-  password  String
-  role      String   // "SUPERADMIN", "GESTOR", "ENTIDAD"
-  phone     String?
-  avatar    String?  // URL or path to image
-  address   String?
-  
-  // Gestor / CV Fields
-  experience   String? @db.Text
-  achievements String? @db.Text
-  training     String? @db.Text
-  titles       String? @db.Text
-  specialties  String? @db.Text // Example for "etc."
-
-  // Entidad / Brand Fields
-  businessName  String?
-  nit          String?
-  contactPerson String?
-
-  authCode  String?  @unique
-  createdAt DateTime @default(now())
-  tickets        Ticket[] @relation("AssignedTickets")
-  createdTickets Ticket[] @relation("CreatedTickets")
-  trainings      Training[]
+  id                 Int        @id @default(autoincrement())
+  username           String     @unique
+  password           String
+  role               String
+  createdAt          DateTime   @default(now())
+  avatar             String?
+  email              String?    @unique
+  phone              String?
+  name               String?
+  authCode           String?    @unique
+  achievements       String?
+  address            String?
+  businessName       String?
+  contactPerson      String?
+  experience         String?
+  nit                String?
+  specialties        String?
+  titles             String?
+  calendarId         String?
+  trainingInfo       String?
+  tickets            Ticket[]   @relation("AssignedTickets")
+  createdTickets     Ticket[]   @relation("CreatedTickets")
+  trainingsRequested Training[] @relation("EntityTrainings")
+  trainingsManaged   Training[] @relation("ManagerTrainings")
 }
 
 model Ticket {
-  id             String      @id // Unique generated code
-  patientName    String
-  contactMethod  String
-  city           String
-  phone          String
-  email          String
-  description    String
-  status         String      @default("INICIAL") 
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-  followUps      FollowUp[]
-  media          Media[]
-  revenue        Float?
-  assignedToId   Int?
-  assignedTo     User?       @relation("AssignedTickets", fields: [assignedToId], references: [id])
-  creatorId      Int?
-  creator        User?       @relation("CreatedTickets", fields: [creatorId], references: [id])
-  isArchived     Boolean     @default(false)
+  id            String     @id
+  patientName   String
+  contactMethod String
+  city          String
+  phone         String
+  email         String
+  description   String
+  status        String     @default("INICIAL")
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  revenue       Float?
+  assignedToId  Int?
+  isArchived    Boolean    @default(false)
+  creatorId     Int?
+  followUps     FollowUp[]
+  media         Media[]
+  assignedTo    User?      @relation("AssignedTickets", fields: [assignedToId], references: [id])
+  creator       User?      @relation("CreatedTickets", fields: [creatorId], references: [id])
 }
 
 model SystemSetting {
@@ -66,25 +63,25 @@ model SystemSetting {
 }
 
 model FollowUp {
-  id           Int      @id @default(autoincrement())
-  ticketId     String
-  ticket       Ticket   @relation(fields: [ticketId], references: [id])
-  content      String
-  diagnosis    String?
-  protocol     String?
-  bonusInfo    String?
-  createdAt    DateTime @default(now())
-  media        Media[]
+  id        Int      @id @default(autoincrement())
+  ticketId  String
+  content   String
+  diagnosis String?
+  protocol  String?
+  bonusInfo String?
+  createdAt DateTime @default(now())
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  media     Media[]
 }
 
 model Media {
-  id        Int      @id @default(autoincrement())
-  ticketId  String
-  ticket    Ticket   @relation(fields: [ticketId], references: [id])
-  url       String   // Local path or URL
+  id         Int       @id @default(autoincrement())
+  ticketId   String
+  url        String
+  createdAt  DateTime  @default(now())
   followUpId Int?
   followUp   FollowUp? @relation(fields: [followUpId], references: [id])
-  createdAt DateTime @default(now())
+  ticket     Ticket    @relation(fields: [ticketId], references: [id])
 }
 
 model Training {
@@ -92,8 +89,17 @@ model Training {
   startTime       DateTime
   endTime         DateTime
   entityId        Int
-  entity          User     @relation(fields: [entityId], references: [id])
-  status          String   @default("CONFIRMADA")
+  status          String   @default("PENDIENTE")
   calendarEventId String?
   createdAt       DateTime @default(now())
+  attendance      Int?
+  description     String?
+  isCompleted     Boolean  @default(false)
+  managerId       Int?
+  notesPost       String?
+  notesPre        String?
+  salesVolume     Float?
+  updatedAt       DateTime @default(now()) @updatedAt
+  entity          User     @relation("EntityTrainings", fields: [entityId], references: [id])
+  manager         User?    @relation("ManagerTrainings", fields: [managerId], references: [id])
 }
