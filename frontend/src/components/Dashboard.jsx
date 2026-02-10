@@ -965,15 +965,52 @@ const TicketList = ({ tickets, user, users, onUpdate, isMobile, showArchived, se
 
 const FollowUpForm = ({ ticket, user, onDone, onDelete, onArchive }) => {
     const isSuperAdmin = user.role === 'SUPERADMIN' || user.role === 'ADMIN';
-    const [form, setForm] = useState({ content: '', diagnosis: '', protocol: '', bonusInfo: '', status: ticket.status });
+    const isGestor = user.role === 'GESTOR' || isSuperAdmin;
+    const [form, setForm] = useState({
+        content: '',
+        diagnosis: '',
+        protocol: '',
+        bonusInfo: '',
+        status: ticket.status,
+        // Basic Info editing
+        patientName: ticket.patientName,
+        phone: ticket.phone,
+        email: ticket.email || '',
+        city: ticket.city
+    });
     const [photos, setPhotos] = useState([]);
     const [submitting, setSubmitting] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSubmitting(true);
+
+        // 1. Update basic info if changed
+        try {
+            await fetch(`${API_URL}/api/tickets/${ticket.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${user.token}`
+                },
+                body: JSON.stringify({
+                    patientName: form.patientName,
+                    phone: form.phone,
+                    email: form.email,
+                    city: form.city
+                })
+            });
+        } catch (err) {
+            console.error('Error updating basic info:', err);
+        }
+
+        // 2. Add follow-up
         const data = new FormData();
-        Object.keys(form).forEach(key => data.append(key, form[key]));
+        data.append('content', form.content);
+        data.append('diagnosis', form.diagnosis);
+        data.append('protocol', form.protocol);
+        data.append('bonusInfo', form.bonusInfo);
+        data.append('status', form.status);
         photos.forEach(file => data.append('photos', file));
 
         try {
@@ -983,28 +1020,76 @@ const FollowUpForm = ({ ticket, user, onDone, onDelete, onArchive }) => {
                 body: data
             });
             onDone();
-        } catch (err) { alert('Error al actualizar'); }
+        } catch (err) { alert('Error al actualizar seguimiento'); }
         finally { setSubmitting(false); }
     };
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Basic Info Section (Editable for SuperAdmin/Gestor) */}
+            {isGestor && (
+                <div className="bg-accent/5 p-4 rounded-2xl border border-accent/10 space-y-4">
+                    <h5 className="text-[10px] font-bold text-accent uppercase tracking-widest flex items-center gap-2">
+                        <span className="material-symbols-outlined text-sm">person_edit</span>
+                        Información Básica del Paciente
+                    </h5>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase">Nombre Completo</label>
+                            <input
+                                className="w-full px-3 py-2 rounded-lg bg-white/50 dark:bg-black/20 border border-gray-200 dark:border-white/10 text-xs dark:text-white outline-none focus:border-accent"
+                                value={form.patientName}
+                                onChange={e => setForm({ ...form, patientName: e.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase">Ciudad</label>
+                            <input
+                                className="w-full px-3 py-2 rounded-lg bg-white/50 dark:bg-black/20 border border-gray-200 dark:border-white/10 text-xs dark:text-white outline-none focus:border-accent"
+                                value={form.city}
+                                onChange={e => setForm({ ...form, city: e.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase">Teléfono</label>
+                            <input
+                                className="w-full px-3 py-2 rounded-lg bg-white/50 dark:bg-black/20 border border-gray-200 dark:border-white/10 text-xs dark:text-white outline-none focus:border-accent"
+                                value={form.phone}
+                                onChange={e => setForm({ ...form, phone: e.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase">Email</label>
+                            <input
+                                className="w-full px-3 py-2 rounded-lg bg-white/50 dark:bg-black/20 border border-gray-200 dark:border-white/10 text-xs dark:text-white outline-none focus:border-accent"
+                                value={form.email}
+                                onChange={e => setForm({ ...form, email: e.target.value })}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="h-px bg-gray-100 dark:bg-white/5 mx-2" />
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                    <label className="text-sm font-bold text-primary dark:text-gray-300 ml-1">Diagnóstico</label>
+                    <label className="text-sm font-bold text-primary dark:text-gray-300 ml-1">Diagnóstico de Seguimiento</label>
                     <input
-                        className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white transition-all"
+                        className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white transition-all focus:border-accent"
                         value={form.diagnosis}
                         onChange={e => setForm({ ...form, diagnosis: e.target.value })}
                         required
+                        placeholder="Ej: Foliculitis tratada"
                     />
                 </div>
                 <div className="space-y-2">
                     <label className="text-sm font-bold text-primary dark:text-gray-300 ml-1">Bonificación / Obsequio</label>
                     <input
-                        className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white transition-all"
+                        className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white transition-all focus:border-accent"
                         value={form.bonusInfo}
                         onChange={e => setForm({ ...form, bonusInfo: e.target.value })}
+                        placeholder="Solo si aplica..."
                     />
                 </div>
             </div>
@@ -1012,24 +1097,25 @@ const FollowUpForm = ({ ticket, user, onDone, onDelete, onArchive }) => {
             <div className="space-y-2">
                 <label className="text-sm font-bold text-primary dark:text-gray-300 ml-1">Protocolo de Procedimiento</label>
                 <textarea
-                    className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white resize-none transition-all"
+                    className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm text-primary dark:text-white resize-none transition-all focus:border-accent"
                     rows="3"
                     value={form.protocol}
                     onChange={e => setForm({ ...form, protocol: e.target.value })}
+                    placeholder="Describe los pasos realizados..."
                 />
             </div>
 
             <div className="space-y-2">
-                <label className="text-sm font-bold text-primary dark:text-gray-300 ml-1">Cambiar Estado</label>
+                <label className="text-sm font-bold text-primary dark:text-gray-300 ml-1">Cambiar Estado del Caso</label>
                 <div className="relative">
                     <select
-                        className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm appearance-none text-gray-600 dark:text-gray-300 transition-all cursor-pointer"
+                        className="input-dashboard w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 outline-none text-sm appearance-none text-gray-600 dark:text-gray-300 transition-all cursor-pointer focus:border-accent"
                         value={form.status}
                         onChange={e => setForm({ ...form, status: e.target.value })}
                     >
-                        <option value="INICIAL">Inicial</option>
+                        <option value="INICIAL">Iniciado (Sin seguimiento)</option>
                         <option value="EN_SEGUIMIENTO">En Seguimiento</option>
-                        <option value="FINALIZADO">Finalizado</option>
+                        <option value="FINALIZADO">Finalizado (Cerrar caso)</option>
                     </select>
                     <span className="material-symbols-outlined absolute right-4 top-3 pointer-events-none text-gray-400">expand_more</span>
                 </div>
